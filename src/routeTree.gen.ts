@@ -9,8 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProgramadorRouteImport } from './routes/programador'
+import { Route as PlanejadorRouteImport } from './routes/planejador'
+import { Route as OperadorRouteImport } from './routes/operador'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as KpisRouteImport } from './routes/kpis'
+import { Route as EncarregadoRouteImport } from './routes/encarregado'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ProgramadorRoute = ProgramadorRouteImport.update({
+  id: '/programador',
+  path: '/programador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanejadorRoute = PlanejadorRouteImport.update({
+  id: '/planejador',
+  path: '/planejador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperadorRoute = OperadorRouteImport.update({
+  id: '/operador',
+  path: '/operador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KpisRoute = KpisRouteImport.update({
+  id: '/kpis',
+  path: '/kpis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EncarregadoRoute = EncarregadoRouteImport.update({
+  id: '/encarregado',
+  path: '/encarregado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +61,130 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/encarregado': typeof EncarregadoRoute
+  '/kpis': typeof KpisRoute
+  '/login': typeof LoginRoute
+  '/operador': typeof OperadorRoute
+  '/planejador': typeof PlanejadorRoute
+  '/programador': typeof ProgramadorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/encarregado': typeof EncarregadoRoute
+  '/kpis': typeof KpisRoute
+  '/login': typeof LoginRoute
+  '/operador': typeof OperadorRoute
+  '/planejador': typeof PlanejadorRoute
+  '/programador': typeof ProgramadorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/encarregado': typeof EncarregadoRoute
+  '/kpis': typeof KpisRoute
+  '/login': typeof LoginRoute
+  '/operador': typeof OperadorRoute
+  '/planejador': typeof PlanejadorRoute
+  '/programador': typeof ProgramadorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
+  id:
+    | '__root__'
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditoriaRoute: typeof AuditoriaRoute
+  EncarregadoRoute: typeof EncarregadoRoute
+  KpisRoute: typeof KpisRoute
+  LoginRoute: typeof LoginRoute
+  OperadorRoute: typeof OperadorRoute
+  PlanejadorRoute: typeof PlanejadorRoute
+  ProgramadorRoute: typeof ProgramadorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/programador': {
+      id: '/programador'
+      path: '/programador'
+      fullPath: '/programador'
+      preLoaderRoute: typeof ProgramadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planejador': {
+      id: '/planejador'
+      path: '/planejador'
+      fullPath: '/planejador'
+      preLoaderRoute: typeof PlanejadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operador': {
+      id: '/operador'
+      path: '/operador'
+      fullPath: '/operador'
+      preLoaderRoute: typeof OperadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kpis': {
+      id: '/kpis'
+      path: '/kpis'
+      fullPath: '/kpis'
+      preLoaderRoute: typeof KpisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encarregado': {
+      id: '/encarregado'
+      path: '/encarregado'
+      fullPath: '/encarregado'
+      preLoaderRoute: typeof EncarregadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +197,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditoriaRoute: AuditoriaRoute,
+  EncarregadoRoute: EncarregadoRoute,
+  KpisRoute: KpisRoute,
+  LoginRoute: LoginRoute,
+  OperadorRoute: OperadorRoute,
+  PlanejadorRoute: PlanejadorRoute,
+  ProgramadorRoute: ProgramadorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
