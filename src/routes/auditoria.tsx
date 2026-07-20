@@ -182,6 +182,17 @@ function AudLinha({ r, desvC, desvL }: { r: any; desvC: number; desvL: number })
                   <span>Início do corte</span>
                 </li>
               )}
+              {(r.solic.agrupamentos.find((a: any) => a.id === r.agrupId)?.paradas ?? []).map((p: any, i: number) => (
+                <li key={`p-${i}`} className="flex gap-3 text-xs bg-orange-500/10 border border-orange-500/30 rounded px-2 py-1">
+                  <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(p.inicio)}</span>
+                  <span className="font-semibold w-40 shrink-0 text-orange-300">{p.operador}</span>
+                  <span>
+                    <b className="text-orange-300">Paralisou corte</b> — motivo: <b>{p.motivo}</b>
+                    {p.fim && <> · retomado {fmtDateTime(p.fim)} ({fmtMin(minutesBetween(p.inicio, p.fim))} parado)</>}
+                    {!p.fim && <> · <span className="text-orange-300 font-bold">ainda parado</span></>}
+                  </span>
+                </li>
+              ))}
               {r.fim && (
                 <li className="flex gap-3 text-xs">
                   <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(r.fim)}</span>
