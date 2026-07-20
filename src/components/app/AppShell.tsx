@@ -99,6 +99,7 @@ export function StatusBadge({ status }: { status: string }) {
     "Aguardando": "bg-muted text-muted-foreground",
     "Alocado": "bg-blue-500/20 text-blue-300 border border-blue-500/40",
     "Em Corte": "bg-yellow-500/25 text-yellow-200 border border-yellow-500/50",
+    "Corte Paralisado": "bg-orange-500/25 text-orange-200 border border-orange-500/60",
     "Cortado": "bg-primary/25 text-primary border border-primary/50",
   };
   return (

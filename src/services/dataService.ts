@@ -76,9 +76,8 @@ export function getPassivosAnteriores() {
 // ============================================================================
 
 /** TODO: Substituir por API Backend SQL — POST /api/solicitacoes */
-export const createSolicitacao = (
-  ...args: Parameters<typeof useStore.getState extends () => infer S ? S extends { addSolicitacao: infer F } ? F : never : never>
-) => useStore.getState().addSolicitacao(...(args as Parameters<ReturnType<typeof useStore.getState>["addSolicitacao"]>));
+export const createSolicitacao: ReturnType<typeof useStore.getState>["addSolicitacao"] = (data) =>
+  useStore.getState().addSolicitacao(data);
 
 /** TODO: Substituir por API Backend SQL — PATCH /api/solicitacoes/:id */
 export const updateSolicitacao = (
