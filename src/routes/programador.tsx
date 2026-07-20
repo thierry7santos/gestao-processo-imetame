@@ -19,7 +19,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fmtDate, fmtDateTime, fmtMin, minutesBetween } from "@/lib/formatters";
 import type { Solicitacao, StatusSolicitacao } from "@/lib/types";
-import { AlertTriangle, FileUp, Play, PauseCircle, CheckCircle2, XCircle, FileText, Save, Settings2 } from "lucide-react";
+import { AlertTriangle, FileUp, Play, PauseCircle, CheckCircle2, XCircle, FileText, Save, Settings2, Filter } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -44,7 +44,9 @@ function ProgramadorPage() {
   const setStatus = useStore((s) => s.setStatus);
 
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
-  const [busca, setBusca] = useState("");
+  const [fId, setFId] = useState("");
+  const [fOs, setFOs] = useState("");
+  const [fTipo, setFTipo] = useState<string>("todos");
   const [open, setOpen] = useState<Solicitacao | null>(null);
 
   const filtradas = useMemo(() => {
@@ -53,24 +55,23 @@ function ProgramadorPage() {
       if (filtroStatus === "todos") return true;
       return s.status === filtroStatus;
     });
-    if (busca) {
-      const q = busca.toLowerCase();
-      arr = arr.filter((s) =>
-        s.id.toLowerCase().includes(q) ||
-        s.os.toLowerCase().includes(q) ||
-        s.titulo.toLowerCase().includes(q) ||
-        (s.numeroPlano ?? "").toLowerCase().includes(q),
-      );
+    if (fTipo !== "todos") arr = arr.filter((s) => s.tipo === fTipo);
+    if (fId) {
+      const q = fId.toLowerCase();
+      arr = arr.filter((s) => s.id.toLowerCase().includes(q) || (s.numeroPlano ?? "").toLowerCase().includes(q));
+    }
+    if (fOs) {
+      const q = fOs.toLowerCase();
+      arr = arr.filter((s) => s.os.toLowerCase().includes(q));
     }
     return arr.sort((a, b) => {
-      // Emergência sempre topo
       if (a.emergencia !== b.emergencia) return a.emergencia ? -1 : 1;
       const pa = ORDEM_PRIORIDADE[a.status] ?? 99;
       const pb = ORDEM_PRIORIDADE[b.status] ?? 99;
       if (pa !== pb) return pa - pb;
       return a.dataNecessidade.localeCompare(b.dataNecessidade);
     });
-  }, [solicitacoes, filtroStatus, busca]);
+  }, [solicitacoes, filtroStatus, fId, fOs, fTipo]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -81,24 +82,52 @@ function ProgramadorPage() {
             Assuma solicitações, importe PDFs e metadados, e conclua planos.
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Input placeholder="Buscar ID, OS, plano…" className="w-56" value={busca} onChange={(e) => setBusca(e.target.value)} />
-          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ativos">Ativos (padrão)</SelectItem>
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="Em Fila">Em Fila</SelectItem>
-              <SelectItem value="Em Processo">Em Processo</SelectItem>
-              <SelectItem value="Paralisado">Paralisado</SelectItem>
-              <SelectItem value="A Revisar">A Revisar</SelectItem>
-              <SelectItem value="Em Revisão">Em Revisão</SelectItem>
-              <SelectItem value="Concluído">Concluído</SelectItem>
-              <SelectItem value="Cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </header>
+
+      <Card className="p-3 border-primary/30">
+        <div className="flex items-center gap-2 text-xs uppercase text-primary font-semibold mb-2">
+          <Filter className="h-3 w-3" /> Filtros da fila
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div>
+            <Label className="text-xs">ID / Nº Plano</Label>
+            <Input placeholder="#0001 · 1250C" className="h-9 font-mono" value={fId} onChange={(e) => setFId(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Número da OS</Label>
+            <Input placeholder="0751.03.001" className="h-9 font-mono" value={fOs} onChange={(e) => setFOs(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Tipo do Plano</Label>
+            <Select value={fTipo} onValueChange={setFTipo}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="Chapa">Chapa</SelectItem>
+                <SelectItem value="Perfil">Perfil</SelectItem>
+                <SelectItem value="Tubulação">Tubulação</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativos">Ativos (padrão)</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="Em Fila">Em Fila</SelectItem>
+                <SelectItem value="Em Processo">Em Processo</SelectItem>
+                <SelectItem value="Paralisado">Paralisado</SelectItem>
+                <SelectItem value="A Revisar">A Revisar</SelectItem>
+                <SelectItem value="Em Revisão">Em Revisão</SelectItem>
+                <SelectItem value="Concluído">Concluído</SelectItem>
+                <SelectItem value="Cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
