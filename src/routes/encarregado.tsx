@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { findUser } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/select";
 import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao } from "@/lib/types";
-import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon } from "lucide-react";
 import { toast } from "sonner";
+import { aplicarPassivosAnteriores } from "@/services/dataService";
 
 export const Route = createFileRoute("/encarregado")({
   component: () => (
