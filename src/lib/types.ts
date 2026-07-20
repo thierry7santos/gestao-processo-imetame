@@ -23,7 +23,12 @@ export type StatusSolicitacao =
   | "Revisado"
   | "Cancelado";
 
-export type StatusCorte = "Aguardando" | "Alocado" | "Em Corte" | "Cortado";
+export type StatusCorte =
+  | "Aguardando"
+  | "Alocado"
+  | "Em Corte"
+  | "Corte Paralisado"
+  | "Cortado";
 
 export type Maquina = "CNC-3" | "Messer";
 
@@ -40,6 +45,13 @@ export interface Validacao {
   compDigitado: number;
   largDigitado: number;
   divergenciaAceita: boolean;
+}
+
+export interface ParadaCorte {
+  inicio: string;
+  fim?: string;
+  motivo: string;
+  operador: string;
 }
 
 export interface Agrupamento {
@@ -64,6 +76,9 @@ export interface Agrupamento {
   fimCorte?: string;
   operador?: string;
   obsOperacao?: string;
+  /** Marca planos alocados em semanas passadas que não foram cortados. */
+  isPassivoAnterior?: boolean;
+  paradas?: ParadaCorte[];
 }
 
 export interface Solicitacao {

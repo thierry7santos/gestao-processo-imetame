@@ -28,7 +28,10 @@ interface Actions {
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
+  paralisarCorte: (solicId: string, agrupId: string, operador: string, motivo: string) => void;
+  retomarCorte: (solicId: string, agrupId: string, operador: string) => void;
   finalizarCorte: (solicId: string, agrupId: string, operador: string, obs?: string) => void;
+  aplicarPassivosAnteriores: () => number;
   resetSeed: () => void;
 }
 
@@ -314,6 +317,86 @@ export const useStore = create<AppState & Actions>()(
               : s,
           ),
         });
+      },
+
+      paralisarCorte: (solicId, agrupId, operador, motivo) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) =>
+                    a.id === agrupId && a.statusCorte === "Em Corte"
+                      ? {
+                          ...a,
+                          statusCorte: "Corte Paralisado",
+                          paradas: [...(a.paradas ?? []), { inicio: ts, motivo, operador }],
+                        }
+                      : a,
+                  ),
+                  historico: [...s.historico, log(operador, `Paralisou corte de ${a_(s, agrupId)} — motivo: ${motivo}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      retomarCorte: (solicId, agrupId, operador) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => {
+                    if (a.id !== agrupId || a.statusCorte !== "Corte Paralisado") return a;
+                    const paradas = [...(a.paradas ?? [])];
+                    const idx = paradas.length - 1;
+                    if (idx >= 0 && !paradas[idx].fim) paradas[idx] = { ...paradas[idx], fim: ts };
+                    return { ...a, statusCorte: "Em Corte", paradas };
+                  }),
+                  historico: [...s.historico, log(operador, `Retomou corte de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      aplicarPassivosAnteriores: () => {
+        // Segunda-feira desta semana (semana vigente contendo hoje)
+        const hoje = new Date();
+        const dow = hoje.getDay();
+        const diff = dow === 0 ? -6 : 1 - dow;
+        const monday = new Date(hoje);
+        monday.setHours(0, 0, 0, 0);
+        monday.setDate(monday.getDate() + diff);
+        const mondayISO = monday.toISOString().slice(0, 10);
+        let count = 0;
+        set({
+          solicitacoes: get().solicitacoes.map((s) => ({
+            ...s,
+            agrupamentos: s.agrupamentos.map((a) => {
+              if (!a.diaAlocado) return a;
+              if (a.statusCorte === "Cortado") return a; // Histórico verde permanece.
+              if (a.diaAlocado >= mondayISO) return a; // Semana vigente ou futuras: mantém.
+              count++;
+              return {
+                ...a,
+                diaAlocado: undefined,
+                maquina: undefined,
+                statusCorte: "Aguardando",
+                isPassivoAnterior: true,
+              };
+            }),
+            historico: s.agrupamentos.some(
+              (a) => a.diaAlocado && a.diaAlocado < mondayISO && a.statusCorte !== "Cortado",
+            )
+              ? [...s.historico, log("Sistema", "Agrupamento(s) devolvidos como Passivo Anterior (semana fechou sem corte)")]
+              : s.historico,
+          })),
+        });
+        return count;
       },
 
       resetSeed: () => {
