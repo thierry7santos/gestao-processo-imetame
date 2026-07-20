@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { findUser } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/select";
 import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao } from "@/lib/types";
-import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon } from "lucide-react";
 import { toast } from "sonner";
+import { aplicarPassivosAnteriores } from "@/services/dataService";
 
 export const Route = createFileRoute("/encarregado")({
   component: () => (
@@ -37,10 +38,17 @@ function EncarregadoPage() {
   const [maquina, setMaquina] = useState<Maquina>("CNC-3");
   const [semanaStart, setSemanaStart] = useState<string>(startOfWeek(todayISO()));
 
+  // Ao carregar a tela do encarregado, devolve para "Disponíveis" os agrupamentos
+  // de semanas fechadas cujo corte não foi finalizado (Passivo Anterior).
+  useEffect(() => {
+    const n = aplicarPassivosAnteriores();
+    if (n > 0) toast(`${n} agrupamento(s) devolvido(s) como Passivo Anterior.`, { icon: "⚠️" });
+  }, []);
+
   // Agrupamentos disponíveis (não alocados) de solicitações em status válidos
   const disponiveis = useMemo(() => {
     const validos = ["Concluído", "A Revisar", "Em Revisão", "Revisado"];
-    const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null }[] = [];
+    const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null; passivo: boolean }[] = [];
     for (const s of solicitacoes) {
       if (!validos.includes(s.status)) continue;
       for (const a of s.agrupamentos) {
@@ -48,11 +56,16 @@ function EncarregadoPage() {
           out.push({
             solic: s, agrup: a,
             alerta: s.status === "A Revisar" ? "orange" : ["Em Revisão", "Revisado"].includes(s.status) ? "purple" : null,
+            passivo: !!a.isPassivoAnterior,
           });
         }
       }
     }
-    return out;
+    // Passivo Anterior no topo, depois pelo ID.
+    return out.sort((a, b) => {
+      if (a.passivo !== b.passivo) return a.passivo ? -1 : 1;
+      return a.solic.id.localeCompare(b.solic.id);
+    });
   }, [solicitacoes]);
 
   const dias = weekDays(semanaStart);
@@ -132,7 +145,12 @@ function EncarregadoPage() {
             const pulse = item.alerta === "orange" ? "pulse-orange border-orange-500/60"
               : item.alerta === "purple" ? "pulse-purple border-purple-500/60" : "border-border";
             return (
-              <div key={item.agrup.id} className={`p-2 rounded border ${pulse} bg-secondary/60 text-xs space-y-1.5`}>
+              <div key={item.agrup.id} className={`p-2 rounded border ${item.passivo ? "border-orange-600 bg-orange-950/40" : pulse + " bg-secondary/60"} text-xs space-y-1.5`}>
+                {item.passivo && (
+                  <div className="flex items-center gap-1 -mt-1 -mx-1 mb-1 px-2 py-1 rounded-t bg-orange-700 text-white text-[10px] font-extrabold uppercase tracking-wide">
+                    <AlertOctagon className="h-3 w-3" /> Passivo Anterior
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="font-mono font-bold">{item.agrup.nome}</div>
                   <StatusBadge status={item.solic.status} />
@@ -195,6 +213,7 @@ function EncarregadoPage() {
                   {blocos.map((b) => {
                     const cls = b.agrup.statusCorte === "Cortado" ? "bg-primary/25 border-primary/60"
                       : b.agrup.statusCorte === "Em Corte" ? "bg-yellow-500/25 border-yellow-500/60"
+                      : b.agrup.statusCorte === "Corte Paralisado" ? "bg-orange-500/25 border-orange-500/60 pulse-orange"
                       : "bg-blue-500/15 border-blue-500/40";
                     return (
                       <div key={b.agrup.id} className={`p-1.5 rounded border ${cls} text-[11px]`}>
