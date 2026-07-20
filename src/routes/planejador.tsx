@@ -17,9 +17,13 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select as FSelect, SelectContent as FSelectContent, SelectItem as FSelectItem,
+  SelectTrigger as FSelectTrigger, SelectValue as FSelectValue,
+} from "@/components/ui/select";
 import { fmtDate, fmtDateTime, fmtMin, todayISO } from "@/lib/formatters";
-import type { Solicitacao, TipoPlano } from "@/lib/types";
-import { AlertTriangle, FileText, Pencil, Plus, RotateCcw, History } from "lucide-react";
+import type { Solicitacao, StatusSolicitacao, TipoPlano } from "@/lib/types";
+import { AlertTriangle, FileText, Pencil, Plus, RotateCcw, History, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/planejador")({
