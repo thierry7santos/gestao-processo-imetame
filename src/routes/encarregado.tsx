@@ -145,7 +145,12 @@ function EncarregadoPage() {
             const pulse = item.alerta === "orange" ? "pulse-orange border-orange-500/60"
               : item.alerta === "purple" ? "pulse-purple border-purple-500/60" : "border-border";
             return (
-              <div key={item.agrup.id} className={`p-2 rounded border ${pulse} bg-secondary/60 text-xs space-y-1.5`}>
+              <div key={item.agrup.id} className={`p-2 rounded border ${item.passivo ? "border-orange-600 bg-orange-950/40" : pulse + " bg-secondary/60"} text-xs space-y-1.5`}>
+                {item.passivo && (
+                  <div className="flex items-center gap-1 -mt-1 -mx-1 mb-1 px-2 py-1 rounded-t bg-orange-700 text-white text-[10px] font-extrabold uppercase tracking-wide">
+                    <AlertOctagon className="h-3 w-3" /> Passivo Anterior
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="font-mono font-bold">{item.agrup.nome}</div>
                   <StatusBadge status={item.solic.status} />
@@ -208,6 +213,7 @@ function EncarregadoPage() {
                   {blocos.map((b) => {
                     const cls = b.agrup.statusCorte === "Cortado" ? "bg-primary/25 border-primary/60"
                       : b.agrup.statusCorte === "Em Corte" ? "bg-yellow-500/25 border-yellow-500/60"
+                      : b.agrup.statusCorte === "Corte Paralisado" ? "bg-orange-500/25 border-orange-500/60 pulse-orange"
                       : "bg-blue-500/15 border-blue-500/40";
                     return (
                       <div key={b.agrup.id} className={`p-1.5 rounded border ${cls} text-[11px]`}>
