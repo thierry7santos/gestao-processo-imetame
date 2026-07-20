@@ -47,10 +47,26 @@ function PlanejadorPage() {
   const [openEditar, setOpenEditar] = useState<Solicitacao | null>(null);
   const [openHistorico, setOpenHistorico] = useState<Solicitacao | null>(null);
 
-  const ordenadas = useMemo(
-    () => [...solicitacoes].sort((a, b) => a.dataNecessidade.localeCompare(b.dataNecessidade)),
-    [solicitacoes],
-  );
+  const [fId, setFId] = useState("");
+  const [fOs, setFOs] = useState("");
+  const [fTipo, setFTipo] = useState<string>("todos");
+  const [fStatus, setFStatus] = useState<string>("todos");
+
+  const ordenadas = useMemo(() => {
+    const q = fId.trim().toLowerCase();
+    const qOs = fOs.trim().toLowerCase();
+    return [...solicitacoes]
+      .filter((s) => {
+        if (q && !s.id.toLowerCase().includes(q)) return false;
+        if (qOs && !s.os.toLowerCase().includes(qOs)) return false;
+        if (fTipo !== "todos" && s.tipo !== fTipo) return false;
+        if (fStatus !== "todos" && s.status !== fStatus) return false;
+        return true;
+      })
+      .sort((a, b) => a.dataNecessidade.localeCompare(b.dataNecessidade));
+  }, [solicitacoes, fId, fOs, fTipo, fStatus]);
+
+  const STATUS_OPS: (StatusSolicitacao | "todos")[] = ["todos","Em Fila","Em Processo","Paralisado","Concluído","A Revisar","Em Revisão","Revisado","Cancelado"];
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -65,6 +81,45 @@ function PlanejadorPage() {
           <Plus className="h-4 w-4 mr-1" /> Nova solicitação
         </Button>
       </header>
+
+      <Card className="p-3 border-primary/30">
+        <div className="flex items-center gap-2 text-xs uppercase text-primary font-semibold mb-2">
+          <Filter className="h-3 w-3" /> Filtros da fila
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div>
+            <Label className="text-xs">ID da Solicitação</Label>
+            <Input placeholder="#0001" className="h-9 font-mono" value={fId} onChange={(e) => setFId(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Número da OS</Label>
+            <Input placeholder="0751.03.001" className="h-9 font-mono" value={fOs} onChange={(e) => setFOs(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Tipo do Plano</Label>
+            <FSelect value={fTipo} onValueChange={setFTipo}>
+              <FSelectTrigger className="h-9"><FSelectValue /></FSelectTrigger>
+              <FSelectContent>
+                <FSelectItem value="todos">Todos</FSelectItem>
+                <FSelectItem value="Chapa">Chapa</FSelectItem>
+                <FSelectItem value="Perfil">Perfil</FSelectItem>
+                <FSelectItem value="Tubulação">Tubulação</FSelectItem>
+              </FSelectContent>
+            </FSelect>
+          </div>
+          <div>
+            <Label className="text-xs">Status</Label>
+            <FSelect value={fStatus} onValueChange={setFStatus}>
+              <FSelectTrigger className="h-9"><FSelectValue /></FSelectTrigger>
+              <FSelectContent>
+                {STATUS_OPS.map((s) => (
+                  <FSelectItem key={s} value={s}>{s === "todos" ? "Todos" : s}</FSelectItem>
+                ))}
+              </FSelectContent>
+            </FSelect>
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
