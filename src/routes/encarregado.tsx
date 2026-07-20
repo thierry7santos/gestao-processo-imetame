@@ -38,10 +38,17 @@ function EncarregadoPage() {
   const [maquina, setMaquina] = useState<Maquina>("CNC-3");
   const [semanaStart, setSemanaStart] = useState<string>(startOfWeek(todayISO()));
 
+  // Ao carregar a tela do encarregado, devolve para "Disponíveis" os agrupamentos
+  // de semanas fechadas cujo corte não foi finalizado (Passivo Anterior).
+  useEffect(() => {
+    const n = aplicarPassivosAnteriores();
+    if (n > 0) toast(`${n} agrupamento(s) devolvido(s) como Passivo Anterior.`, { icon: "⚠️" });
+  }, []);
+
   // Agrupamentos disponíveis (não alocados) de solicitações em status válidos
   const disponiveis = useMemo(() => {
     const validos = ["Concluído", "A Revisar", "Em Revisão", "Revisado"];
-    const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null }[] = [];
+    const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null; passivo: boolean }[] = [];
     for (const s of solicitacoes) {
       if (!validos.includes(s.status)) continue;
       for (const a of s.agrupamentos) {
@@ -49,11 +56,16 @@ function EncarregadoPage() {
           out.push({
             solic: s, agrup: a,
             alerta: s.status === "A Revisar" ? "orange" : ["Em Revisão", "Revisado"].includes(s.status) ? "purple" : null,
+            passivo: !!a.isPassivoAnterior,
           });
         }
       }
     }
-    return out;
+    // Passivo Anterior no topo, depois pelo ID.
+    return out.sort((a, b) => {
+      if (a.passivo !== b.passivo) return a.passivo ? -1 : 1;
+      return a.solic.id.localeCompare(b.solic.id);
+    });
   }, [solicitacoes]);
 
   const dias = weekDays(semanaStart);
