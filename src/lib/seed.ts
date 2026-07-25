@@ -174,5 +174,5 @@ export function seedData(): {
     ],
   });
 
-  return { solicitacoes: list, nextSolicId: 6, nextPlanoNum: 1250 };
+  return { solicitacoes: list, nextSolicId: 6, nextPlanoNum: 1250, nextPlanoNumP: 150, nextPlanoNumT: 320 };
 }
