@@ -46,6 +46,8 @@ export const useStore = create<AppState & Actions>()(
       solicitacoes: [],
       nextSolicId: 1,
       nextPlanoNum: 1250,
+      nextPlanoNumP: 150,
+      nextPlanoNumT: 320,
       seeded: false,
 
       login: (username) => set({ sessao: { username } }),
