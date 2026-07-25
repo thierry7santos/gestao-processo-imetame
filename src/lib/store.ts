@@ -124,18 +124,29 @@ export const useStore = create<AppState & Actions>()(
       },
 
       iniciarPlano: (id, programador) => {
-        const num = get().nextPlanoNum;
+        const solic = get().solicitacoes.find((s) => s.id === id);
+        if (!solic) return;
+        const tipo = solic.tipo;
+        const suffix = tipo === "Perfil" ? "P" : tipo === "Tubulação" ? "T" : "C";
+        const num =
+          suffix === "P" ? get().nextPlanoNumP : suffix === "T" ? get().nextPlanoNumT : get().nextPlanoNum;
+        const patch: Partial<AppState> =
+          suffix === "P"
+            ? { nextPlanoNumP: num + 1 }
+            : suffix === "T"
+              ? { nextPlanoNumT: num + 1 }
+              : { nextPlanoNum: num + 1 };
         set({
-          nextPlanoNum: num + 1,
+          ...(patch as AppState),
           solicitacoes: get().solicitacoes.map((s) =>
             s.id === id
               ? {
                   ...s,
                   status: "Em Processo",
-                  numeroPlano: `${num}C`,
+                  numeroPlano: `${num}${suffix}`,
                   programador,
                   inicioProg: nowISO(),
-                  historico: [...s.historico, log(programador, `Iniciou plano ${num}C`)],
+                  historico: [...s.historico, log(programador, `Iniciou plano ${num}${suffix}`)],
                 }
               : s,
           ),
