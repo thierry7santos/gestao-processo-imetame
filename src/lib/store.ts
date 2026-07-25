@@ -425,6 +425,8 @@ export const useStore = create<AppState & Actions>()(
           state.solicitacoes = seed.solicitacoes;
           state.nextSolicId = seed.nextSolicId;
           state.nextPlanoNum = seed.nextPlanoNum;
+          state.nextPlanoNumP = seed.nextPlanoNumP;
+          state.nextPlanoNumT = seed.nextPlanoNumT;
           state.seeded = true;
         }
       },
