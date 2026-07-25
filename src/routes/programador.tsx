@@ -260,6 +260,18 @@ function DetalhesEngenharia({
               {s.descricaoRevisao}
             </div>
           )}
+          {s.rirsPerfis && (
+            <div className="text-sm mt-2 p-3 rounded border border-primary/40 bg-primary/5 whitespace-pre-wrap">
+              <div className="text-xs uppercase text-primary font-semibold mb-1">RIR's dos Perfis</div>
+              {s.rirsPerfis}
+            </div>
+          )}
+          {s.rirsTubos && (
+            <div className="text-sm mt-2 p-3 rounded border border-primary/40 bg-primary/5 whitespace-pre-wrap">
+              <div className="text-xs uppercase text-primary font-semibold mb-1">RIR's dos Tubos</div>
+              {s.rirsTubos}
+            </div>
+          )}
           {s.anexos.length > 0 && (
             <div className="text-xs text-muted-foreground mt-1">Anexos: {s.anexos.map((a) => a.nome).join(", ")}</div>
           )}
