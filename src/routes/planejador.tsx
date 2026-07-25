@@ -234,6 +234,7 @@ function NovaSolicitacaoDialog({
   onSubmit: (data: {
     os: string; titulo: string; tipo: TipoPlano; dataNecessidade: string;
     descricao: string; anexos: { nome: string }[]; emergencia: boolean;
+    rirsPerfis?: string; rirsTubos?: string;
   }) => void;
 }) {
   const [os, setOs] = useState("");
@@ -241,6 +242,8 @@ function NovaSolicitacaoDialog({
   const [tipo, setTipo] = useState<TipoPlano>("Chapa");
   const [data, setData] = useState(todayISO());
   const [desc, setDesc] = useState("");
+  const [rirsPerfis, setRirsPerfis] = useState("");
+  const [rirsTubos, setRirsTubos] = useState("");
   const [emerg, setEmerg] = useState(false);
   const [arquivos, setArquivos] = useState<{ nome: string }[]>([]);
 
@@ -248,15 +251,19 @@ function NovaSolicitacaoDialog({
 
   function reset() {
     setOs(""); setTitulo(""); setTipo("Chapa"); setData(todayISO());
-    setDesc(""); setEmerg(false); setArquivos([]);
+    setDesc(""); setRirsPerfis(""); setRirsTubos(""); setEmerg(false); setArquivos([]);
   }
 
   function submit() {
     if (!os.trim() || !titulo.trim()) { toast.error("Preencha OS e título"); return; }
+    if (tipo === "Perfil" && !rirsPerfis.trim()) { toast.error("Informe os RIR's dos Perfis"); return; }
+    if (tipo === "Tubulação" && !rirsTubos.trim()) { toast.error("Informe os RIR's dos Tubos"); return; }
     onSubmit({
       os: os.trim(), titulo: titulo.trim(), tipo,
       dataNecessidade: data, descricao: desc,
       anexos: arquivos, emergencia: emerg && emergAtivavel,
+      rirsPerfis: tipo === "Perfil" ? rirsPerfis.trim() : undefined,
+      rirsTubos: tipo === "Tubulação" ? rirsTubos.trim() : undefined,
     });
     reset();
     onOpenChange(false);
@@ -318,6 +325,28 @@ function NovaSolicitacaoDialog({
             <Label>Descrição</Label>
             <Textarea rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} />
           </div>
+          {tipo === "Perfil" && (
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>RIR's dos Perfis <span className="text-destructive">*</span></Label>
+              <Textarea
+                rows={3}
+                value={rirsPerfis}
+                onChange={(e) => setRirsPerfis(e.target.value)}
+                placeholder="Liste os RIR's dos perfis (obrigatório)"
+              />
+            </div>
+          )}
+          {tipo === "Tubulação" && (
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>RIR's dos Tubos <span className="text-destructive">*</span></Label>
+              <Textarea
+                rows={3}
+                value={rirsTubos}
+                onChange={(e) => setRirsTubos(e.target.value)}
+                placeholder="Liste os RIR's dos tubos (obrigatório)"
+              />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>

@@ -46,16 +46,16 @@ function ProgramadorPage() {
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [fId, setFId] = useState("");
   const [fOs, setFOs] = useState("");
-  const [fTipo, setFTipo] = useState<string>("todos");
+  const [tipoAtivo, setTipoAtivo] = useState<"Chapa" | "Perfil" | "Tubulação">("Chapa");
   const [open, setOpen] = useState<Solicitacao | null>(null);
 
   const filtradas = useMemo(() => {
-    let arr = solicitacoes.filter((s) => {
+    let arr = solicitacoes.filter((s) => s.tipo === tipoAtivo);
+    arr = arr.filter((s) => {
       if (filtroStatus === "ativos") return !["Concluído", "Cancelado"].includes(s.status);
       if (filtroStatus === "todos") return true;
       return s.status === filtroStatus;
     });
-    if (fTipo !== "todos") arr = arr.filter((s) => s.tipo === fTipo);
     if (fId) {
       const q = fId.toLowerCase();
       arr = arr.filter((s) => s.id.toLowerCase().includes(q) || (s.numeroPlano ?? "").toLowerCase().includes(q));
@@ -71,7 +71,7 @@ function ProgramadorPage() {
       if (pa !== pb) return pa - pb;
       return a.dataNecessidade.localeCompare(b.dataNecessidade);
     });
-  }, [solicitacoes, filtroStatus, fId, fOs, fTipo]);
+  }, [solicitacoes, filtroStatus, fId, fOs, tipoAtivo]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -84,11 +84,32 @@ function ProgramadorPage() {
         </div>
       </header>
 
+      <div className="flex flex-wrap gap-2">
+        {(["Chapa", "Perfil", "Tubulação"] as const).map((t) => {
+          const label = t === "Tubulação" ? "Tubo" : t;
+          const ativo = tipoAtivo === t;
+          const count = solicitacoes.filter((s) => s.tipo === t && !["Concluído", "Cancelado"].includes(s.status)).length;
+          return (
+            <Button
+              key={t}
+              type="button"
+              size="lg"
+              variant={ativo ? "default" : "outline"}
+              className={ativo ? "bg-primary text-primary-foreground" : "border-primary/40"}
+              onClick={() => setTipoAtivo(t)}
+            >
+              {label}
+              <Badge variant="secondary" className="ml-2">{count}</Badge>
+            </Button>
+          );
+        })}
+      </div>
+
       <Card className="p-3 border-primary/30">
         <div className="flex items-center gap-2 text-xs uppercase text-primary font-semibold mb-2">
-          <Filter className="h-3 w-3" /> Filtros da fila
+          <Filter className="h-3 w-3" /> Filtros da fila · {tipoAtivo === "Tubulação" ? "Tubo" : tipoAtivo}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           <div>
             <Label className="text-xs">ID / Nº Plano</Label>
             <Input placeholder="#0001 · 1250C" className="h-9 font-mono" value={fId} onChange={(e) => setFId(e.target.value)} />
@@ -96,18 +117,6 @@ function ProgramadorPage() {
           <div>
             <Label className="text-xs">Número da OS</Label>
             <Input placeholder="0751.03.001" className="h-9 font-mono" value={fOs} onChange={(e) => setFOs(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Tipo do Plano</Label>
-            <Select value={fTipo} onValueChange={setFTipo}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Chapa">Chapa</SelectItem>
-                <SelectItem value="Perfil">Perfil</SelectItem>
-                <SelectItem value="Tubulação">Tubulação</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div>
             <Label className="text-xs">Status</Label>
@@ -249,6 +258,18 @@ function DetalhesEngenharia({
             <div className="text-sm mt-2 p-3 rounded border border-orange-500/50 bg-orange-500/10 whitespace-pre-wrap">
               <div className="text-xs uppercase text-orange-300 font-semibold mb-1">Descrição da revisão</div>
               {s.descricaoRevisao}
+            </div>
+          )}
+          {s.rirsPerfis && (
+            <div className="text-sm mt-2 p-3 rounded border border-primary/40 bg-primary/5 whitespace-pre-wrap">
+              <div className="text-xs uppercase text-primary font-semibold mb-1">RIR's dos Perfis</div>
+              {s.rirsPerfis}
+            </div>
+          )}
+          {s.rirsTubos && (
+            <div className="text-sm mt-2 p-3 rounded border border-primary/40 bg-primary/5 whitespace-pre-wrap">
+              <div className="text-xs uppercase text-primary font-semibold mb-1">RIR's dos Tubos</div>
+              {s.rirsTubos}
             </div>
           )}
           {s.anexos.length > 0 && (
