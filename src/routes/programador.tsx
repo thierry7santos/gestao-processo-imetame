@@ -46,7 +46,7 @@ function ProgramadorPage() {
   const [filtroStatus, setFiltroStatus] = useState<string>("ativos");
   const [fId, setFId] = useState("");
   const [fOs, setFOs] = useState("");
-  const [fTipo, setFTipo] = useState<string>("todos");
+  const [tipoAtivo, setTipoAtivo] = useState<"Chapa" | "Perfil" | "Tubulação">("Chapa");
   const [open, setOpen] = useState<Solicitacao | null>(null);
 
   const filtradas = useMemo(() => {
