@@ -50,12 +50,12 @@ function ProgramadorPage() {
   const [open, setOpen] = useState<Solicitacao | null>(null);
 
   const filtradas = useMemo(() => {
-    let arr = solicitacoes.filter((s) => {
+    let arr = solicitacoes.filter((s) => s.tipo === tipoAtivo);
+    arr = arr.filter((s) => {
       if (filtroStatus === "ativos") return !["Concluído", "Cancelado"].includes(s.status);
       if (filtroStatus === "todos") return true;
       return s.status === filtroStatus;
     });
-    if (fTipo !== "todos") arr = arr.filter((s) => s.tipo === fTipo);
     if (fId) {
       const q = fId.toLowerCase();
       arr = arr.filter((s) => s.id.toLowerCase().includes(q) || (s.numeroPlano ?? "").toLowerCase().includes(q));
@@ -71,7 +71,7 @@ function ProgramadorPage() {
       if (pa !== pb) return pa - pb;
       return a.dataNecessidade.localeCompare(b.dataNecessidade);
     });
-  }, [solicitacoes, filtroStatus, fId, fOs, fTipo]);
+  }, [solicitacoes, filtroStatus, fId, fOs, tipoAtivo]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
