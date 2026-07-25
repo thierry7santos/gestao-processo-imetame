@@ -89,6 +89,8 @@ export interface Solicitacao {
   dataNecessidade: string; // yyyy-mm-dd
   descricao: string;
   descricaoRevisao?: string;
+  rirsPerfis?: string;
+  rirsTubos?: string;
   anexos: { nome: string }[];
   emergencia: boolean;
   status: StatusSolicitacao;
@@ -110,5 +112,7 @@ export interface AppState {
   solicitacoes: Solicitacao[];
   nextSolicId: number;
   nextPlanoNum: number;
+  nextPlanoNumP: number;
+  nextPlanoNumT: number;
   seeded: boolean;
 }
