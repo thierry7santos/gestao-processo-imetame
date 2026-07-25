@@ -84,11 +84,32 @@ function ProgramadorPage() {
         </div>
       </header>
 
+      <div className="flex flex-wrap gap-2">
+        {(["Chapa", "Perfil", "Tubulação"] as const).map((t) => {
+          const label = t === "Tubulação" ? "Tubo" : t;
+          const ativo = tipoAtivo === t;
+          const count = solicitacoes.filter((s) => s.tipo === t && !["Concluído", "Cancelado"].includes(s.status)).length;
+          return (
+            <Button
+              key={t}
+              type="button"
+              size="lg"
+              variant={ativo ? "default" : "outline"}
+              className={ativo ? "bg-primary text-primary-foreground" : "border-primary/40"}
+              onClick={() => setTipoAtivo(t)}
+            >
+              {label}
+              <Badge variant="secondary" className="ml-2">{count}</Badge>
+            </Button>
+          );
+        })}
+      </div>
+
       <Card className="p-3 border-primary/30">
         <div className="flex items-center gap-2 text-xs uppercase text-primary font-semibold mb-2">
-          <Filter className="h-3 w-3" /> Filtros da fila
+          <Filter className="h-3 w-3" /> Filtros da fila · {tipoAtivo === "Tubulação" ? "Tubo" : tipoAtivo}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           <div>
             <Label className="text-xs">ID / Nº Plano</Label>
             <Input placeholder="#0001 · 1250C" className="h-9 font-mono" value={fId} onChange={(e) => setFId(e.target.value)} />
@@ -96,18 +117,6 @@ function ProgramadorPage() {
           <div>
             <Label className="text-xs">Número da OS</Label>
             <Input placeholder="0751.03.001" className="h-9 font-mono" value={fOs} onChange={(e) => setFOs(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Tipo do Plano</Label>
-            <Select value={fTipo} onValueChange={setFTipo}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Chapa">Chapa</SelectItem>
-                <SelectItem value="Perfil">Perfil</SelectItem>
-                <SelectItem value="Tubulação">Tubulação</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div>
             <Label className="text-xs">Status</Label>
