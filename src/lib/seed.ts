@@ -28,6 +28,8 @@ export function seedData(): {
   solicitacoes: Solicitacao[];
   nextSolicId: number;
   nextPlanoNum: number;
+  nextPlanoNumP: number;
+  nextPlanoNumT: number;
 } {
   const hoje = todayISO();
   const list: Solicitacao[] = [];
