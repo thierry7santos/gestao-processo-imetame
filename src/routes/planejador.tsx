@@ -234,6 +234,7 @@ function NovaSolicitacaoDialog({
   onSubmit: (data: {
     os: string; titulo: string; tipo: TipoPlano; dataNecessidade: string;
     descricao: string; anexos: { nome: string }[]; emergencia: boolean;
+    rirsPerfis?: string; rirsTubos?: string;
   }) => void;
 }) {
   const [os, setOs] = useState("");
@@ -241,6 +242,8 @@ function NovaSolicitacaoDialog({
   const [tipo, setTipo] = useState<TipoPlano>("Chapa");
   const [data, setData] = useState(todayISO());
   const [desc, setDesc] = useState("");
+  const [rirsPerfis, setRirsPerfis] = useState("");
+  const [rirsTubos, setRirsTubos] = useState("");
   const [emerg, setEmerg] = useState(false);
   const [arquivos, setArquivos] = useState<{ nome: string }[]>([]);
 
@@ -248,15 +251,19 @@ function NovaSolicitacaoDialog({
 
   function reset() {
     setOs(""); setTitulo(""); setTipo("Chapa"); setData(todayISO());
-    setDesc(""); setEmerg(false); setArquivos([]);
+    setDesc(""); setRirsPerfis(""); setRirsTubos(""); setEmerg(false); setArquivos([]);
   }
 
   function submit() {
     if (!os.trim() || !titulo.trim()) { toast.error("Preencha OS e título"); return; }
+    if (tipo === "Perfil" && !rirsPerfis.trim()) { toast.error("Informe os RIR's dos Perfis"); return; }
+    if (tipo === "Tubulação" && !rirsTubos.trim()) { toast.error("Informe os RIR's dos Tubos"); return; }
     onSubmit({
       os: os.trim(), titulo: titulo.trim(), tipo,
       dataNecessidade: data, descricao: desc,
       anexos: arquivos, emergencia: emerg && emergAtivavel,
+      rirsPerfis: tipo === "Perfil" ? rirsPerfis.trim() : undefined,
+      rirsTubos: tipo === "Tubulação" ? rirsTubos.trim() : undefined,
     });
     reset();
     onOpenChange(false);
