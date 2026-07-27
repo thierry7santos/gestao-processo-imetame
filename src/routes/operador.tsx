@@ -92,7 +92,7 @@ function OperadorPage() {
     <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold">Operação · Chão de fábrica</h1>
+          <h1 className="text-3xl font-extrabold">Operação · Chão de fábrica <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
           <p className="text-sm text-muted-foreground">Turno de hoje — {new Date().toLocaleDateString("pt-BR")} · Operador: <b>{user.nome}</b></p>
         </div>
         <div>
