@@ -108,7 +108,9 @@ function LoginPage() {
                   className="text-left px-3 py-2 rounded-md bg-secondary hover:bg-accent transition-colors"
                 >
                   <div className="font-mono font-semibold">{u.username}</div>
-                  <div className="text-[10px] text-muted-foreground uppercase">{u.perfil}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase">
+                    {u.perfil}{u.tipo ? ` · ${u.tipo === "Tubulação" ? "Tubo" : u.tipo}` : ""}
+                  </div>
                 </button>
               ))}
             </div>
