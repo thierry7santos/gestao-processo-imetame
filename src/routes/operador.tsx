@@ -55,7 +55,9 @@ function OperadorPage() {
   const user = findUser(sessao.username)!;
   const solicitacoes = useStore((s) => s.solicitacoes);
 
-  const [maquina, setMaquina] = useState<Maquina>("CNC-3");
+  const maquinasArea = useMemo(() => maquinasDoUsuario(user), [user]);
+  const tipoUsuario = user.tipo ?? "Chapa";
+  const [maquina, setMaquina] = useState<Maquina>(maquinasArea[0]);
   const [openValid, setOpenValid] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
   const [openFinalizar, setOpenFinalizar] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
   const [openParar, setOpenParar] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
