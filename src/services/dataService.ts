@@ -35,6 +35,7 @@ import type {
   Maquina,
   Solicitacao,
   StatusSolicitacao,
+  Turno,
   Validacao,
 } from "@/lib/types";
 
@@ -129,14 +130,15 @@ export const aplicarMetadadosExcel = (
 export const toggleChapaRecebida = (solicId: string, agrupId: string) =>
   useStore.getState().toggleChapaRecebida(solicId, agrupId);
 
-/** TODO: Substituir por API Backend SQL — POST /api/agrupamentos/:id/alocar */
+/** TODO: Substituir por API Backend SQL — POST /api/agrupamentos/:id/alocar (body: { maquina, turno, dia }) */
 export const alocarAgrupamento = (
   solicId: string,
   agrupId: string,
   maquina: Maquina,
+  turno: Turno,
   diaISO: string,
   usuario: string,
-) => useStore.getState().alocarAgrupamento(solicId, agrupId, maquina, diaISO, usuario);
+) => useStore.getState().alocarAgrupamento(solicId, agrupId, maquina, turno, diaISO, usuario);
 
 /** TODO: Substituir por API Backend SQL — POST /api/agrupamentos/:id/desalocar */
 export const desalocarAgrupamento = (solicId: string, agrupId: string) =>

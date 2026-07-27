@@ -127,6 +127,7 @@ function PlanejadorPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-20">ID</TableHead>
+                <TableHead>Solicitante</TableHead>
                 <TableHead>OS</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -148,6 +149,7 @@ function PlanejadorPage() {
                 return (
                   <TableRow key={s.id} className={emerg ? "bg-destructive/5" : revisao ? "bg-orange-500/5" : ""}>
                     <TableCell className="font-mono font-semibold">{s.id}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{s.planejadorCriador}</TableCell>
                     <TableCell className="font-mono text-xs">{s.os}</TableCell>
                     <TableCell className="max-w-[220px]">
                       <div className="flex items-center gap-2">
@@ -190,7 +192,7 @@ function PlanejadorPage() {
                 );
               })}
               {ordenadas.length === 0 && (
-                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma solicitação.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">Nenhuma solicitação.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

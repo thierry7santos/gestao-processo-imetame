@@ -144,6 +144,7 @@ function ProgramadorPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">ID</TableHead>
+                <TableHead>Solicitante</TableHead>
                 <TableHead>OS</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Necessidade</TableHead>
@@ -163,6 +164,7 @@ function ProgramadorPage() {
                   <TableRow key={s.id}
                     className={emerg ? "bg-destructive/5 pulse-red" : revisao ? "bg-orange-500/5" : ""}>
                     <TableCell className="font-mono">{s.id}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{s.planejadorCriador}</TableCell>
                     <TableCell className="font-mono text-xs">{s.os}</TableCell>
                     <TableCell className="max-w-[240px]">
                       <div className="flex items-center gap-2">
@@ -189,7 +191,7 @@ function ProgramadorPage() {
                 );
               })}
               {filtradas.length === 0 && (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nada por aqui.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nada por aqui.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

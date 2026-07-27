@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { findUser } from "@/lib/auth";
+import { findUser, maquinasDoUsuario, MAQUINAS_POR_TIPO } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
 import { StatusBadge } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate } from "@/lib/formatters";
-import type { Agrupamento, Maquina, Solicitacao } from "@/lib/types";
-import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon } from "lucide-react";
+import type { Agrupamento, Maquina, Solicitacao, Turno } from "@/lib/types";
+import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
-import { aplicarPassivosAnteriores } from "@/services/dataService";
+import { aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar } from "@/services/dataService";
 
 export const Route = createFileRoute("/encarregado")({
   component: () => (
@@ -25,31 +25,38 @@ export const Route = createFileRoute("/encarregado")({
   ),
 });
 
-const MAQUINAS: Maquina[] = ["CNC-3", "Messer"];
+const TURNOS: Turno[] = ["Dia", "Noite"];
 
 function EncarregadoPage() {
   const sessao = useStore((s) => s.sessao)!;
   const user = findUser(sessao.username)!;
+  const tipoUsuario = user.tipo ?? "Chapa";
+  const maquinasArea = useMemo(() => maquinasDoUsuario(user), [user]);
+
   const solicitacoes = useStore((s) => s.solicitacoes);
   const toggleChapa = useStore((s) => s.toggleChapaRecebida);
-  const alocar = useStore((s) => s.alocarAgrupamento);
   const desalocar = useStore((s) => s.desalocarAgrupamento);
 
-  const [maquina, setMaquina] = useState<Maquina>("CNC-3");
+  const [maquina, setMaquina] = useState<Maquina>(maquinasArea[0]);
+  const [turno, setTurno] = useState<Turno>("Dia");
   const [semanaStart, setSemanaStart] = useState<string>(startOfWeek(todayISO()));
 
-  // Ao carregar a tela do encarregado, devolve para "Disponíveis" os agrupamentos
-  // de semanas fechadas cujo corte não foi finalizado (Passivo Anterior).
   useEffect(() => {
     const n = aplicarPassivosAnteriores();
     if (n > 0) toast(`${n} agrupamento(s) devolvido(s) como Passivo Anterior.`, { icon: "⚠️" });
   }, []);
 
-  // Agrupamentos disponíveis (não alocados) de solicitações em status válidos
+  // Se o tipo mudar (troca de sessão), garantir máquina válida
+  useEffect(() => {
+    if (!maquinasArea.includes(maquina)) setMaquina(maquinasArea[0]);
+  }, [maquinasArea, maquina]);
+
+  // Disponíveis (não alocados) filtrados por tipo do usuário
   const disponiveis = useMemo(() => {
     const validos = ["Concluído", "A Revisar", "Em Revisão", "Revisado"];
     const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null; passivo: boolean }[] = [];
     for (const s of solicitacoes) {
+      if (s.tipo !== tipoUsuario) continue;
       if (!validos.includes(s.status)) continue;
       for (const a of s.agrupamentos) {
         if (a.statusCorte === "Aguardando") {
@@ -61,28 +68,28 @@ function EncarregadoPage() {
         }
       }
     }
-    // Passivo Anterior no topo, depois pelo ID.
     return out.sort((a, b) => {
       if (a.passivo !== b.passivo) return a.passivo ? -1 : 1;
       return a.solic.id.localeCompare(b.solic.id);
     });
-  }, [solicitacoes]);
+  }, [solicitacoes, tipoUsuario]);
 
   const dias = weekDays(semanaStart);
 
-  // Blocos alocados por dia
+  // Blocos por dia, filtrados por (máquina, turno) selecionados
   const blocosPorDia = useMemo(() => {
     const map: Record<string, { solic: Solicitacao; agrup: Agrupamento }[]> = {};
     for (const d of dias) map[d.iso] = [];
     for (const s of solicitacoes) {
       for (const a of s.agrupamentos) {
-        if (a.maquina !== maquina || !a.diaAlocado) continue;
-        if (!(a.diaAlocado in map)) continue;
+        if (a.maquina !== maquina) continue;
+        if ((a.turno ?? "Dia") !== turno) continue;
+        if (!a.diaAlocado || !(a.diaAlocado in map)) continue;
         map[a.diaAlocado].push({ solic: s, agrup: a });
       }
     }
     return map;
-  }, [solicitacoes, maquina, dias]);
+  }, [solicitacoes, maquina, turno, dias]);
 
   function tryAlocar(item: { solic: Solicitacao; agrup: Agrupamento }, diaISO: string) {
     if (!item.agrup.chapaRecebida) {
@@ -92,19 +99,19 @@ function EncarregadoPage() {
     const dia = dias.find((d) => d.iso === diaISO)!;
     const usado = blocosPorDia[diaISO].reduce((acc, b) => acc + (b.agrup.tempoEstMin ?? 0), 0);
     if (usado + (item.agrup.tempoEstMin ?? 0) > dia.limitMin) {
-      toast.error(`Excede o limite diário (${fmtMin(dia.limitMin)}) de ${maquina}`);
+      toast.error(`Excede o limite do turno ${turno} (${fmtMin(dia.limitMin)}) de ${maquina}`);
       return;
     }
-    alocar(item.solic.id, item.agrup.id, maquina, diaISO, user.nome);
-    toast.success(`Alocado em ${fmtDate(diaISO)}`);
+    svcAlocar(item.solic.id, item.agrup.id, maquina, turno, diaISO, user.nome);
+    toast.success(`Alocado em ${fmtDate(diaISO)} · ${maquina} · ${turno}`);
   }
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Preparação · Encarregado</h1>
-          <p className="text-sm text-muted-foreground">Alocação semanal por máquina.</p>
+          <h1 className="text-2xl font-bold">Preparação · Encarregado <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
+          <p className="text-sm text-muted-foreground">Alocação semanal por máquina e turno · Área: {tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}.</p>
         </div>
         <div className="flex gap-2 items-end flex-wrap">
           <div>
@@ -112,7 +119,25 @@ function EncarregadoPage() {
             <Select value={maquina} onValueChange={(v) => setMaquina(v as Maquina)}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {MAQUINAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                {maquinasArea.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Turno ativo</Label>
+            <Select value={turno} onValueChange={(v) => setTurno(v as Turno)}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TURNOS.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    <span className="inline-flex items-center gap-2">
+                      {t === "Dia" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                      {t}
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -131,11 +156,22 @@ function EncarregadoPage() {
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-[320px_1fr] gap-4">
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider">
+        <span className="px-2 py-1 rounded bg-primary/15 text-primary font-bold">{maquina}</span>
+        <span className={`px-2 py-1 rounded font-bold inline-flex items-center gap-1 ${turno === "Dia" ? "bg-yellow-400/20 text-yellow-200" : "bg-indigo-500/20 text-indigo-200"}`}>
+          {turno === "Dia" ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
+          Turno {turno}
+        </span>
+        <span className="text-muted-foreground normal-case">
+          {turno === "Dia" ? "07:30 → 17:18" : "18:30 → 04:18"}
+        </span>
+      </div>
+
+      <div className="grid lg:grid-cols-[340px_1fr] gap-4">
         {/* Lista de disponíveis */}
-        <Card className="p-3 space-y-2 max-h-[75vh] overflow-y-auto">
+        <Card className="p-3 space-y-2 max-h-[80vh] overflow-y-auto">
           <div className="text-sm font-bold flex items-center justify-between">
-            Disponíveis
+            Disponíveis · {tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}
             <span className="text-xs font-normal text-muted-foreground">{disponiveis.length}</span>
           </div>
           {disponiveis.length === 0 && (
@@ -144,24 +180,32 @@ function EncarregadoPage() {
           {disponiveis.map((item) => {
             const pulse = item.alerta === "orange" ? "pulse-orange border-orange-500/60"
               : item.alerta === "purple" ? "pulse-purple border-purple-500/60" : "border-border";
+            const a = item.agrup;
             return (
-              <div key={item.agrup.id} className={`p-2 rounded border ${item.passivo ? "border-orange-600 bg-orange-950/40" : pulse + " bg-secondary/60"} text-xs space-y-1.5`}>
+              <div key={a.id} className={`p-2 rounded border ${item.passivo ? "border-orange-600 bg-orange-950/40" : pulse + " bg-secondary/60"} text-xs space-y-1.5`}>
                 {item.passivo && (
                   <div className="flex items-center gap-1 -mt-1 -mx-1 mb-1 px-2 py-1 rounded-t bg-orange-700 text-white text-[10px] font-extrabold uppercase tracking-wide">
                     <AlertOctagon className="h-3 w-3" /> Passivo Anterior
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <div className="font-mono font-bold">{item.agrup.nome}</div>
+                  <div className="font-mono font-bold">{a.nome}</div>
                   <StatusBadge status={item.solic.status} />
                 </div>
                 <div className="text-muted-foreground truncate">{item.solic.id} · {item.solic.titulo}</div>
-                <div className="flex gap-2 text-[11px] text-muted-foreground">
-                  <span>Peso: <b className="text-foreground">{item.agrup.peso ?? "—"}kg</b></span>
-                  <span>Tempo: <b className="text-foreground">{fmtMin(item.agrup.tempoEstMin)}</b></span>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+                  <span className="text-muted-foreground">Peso: <b className="text-foreground">{a.peso ?? "—"} kg</b></span>
+                  <span className="text-muted-foreground">Tempo: <b className="text-foreground">{fmtMin(a.tempoEstMin)}</b></span>
+                  <span className="text-muted-foreground">RIR: <b className="text-foreground">{a.rir ?? "—"}</b></span>
+                  <span className="text-muted-foreground">Mat.: <b className="text-foreground">{a.material ?? "—"}</b></span>
+                  <span className="text-muted-foreground">Esp.: <b className="text-foreground">{a.espessura ? `${a.espessura} mm` : "—"}</b></span>
+                  <span className="text-muted-foreground">Qtd: <b className="text-foreground">{a.qtdItens ?? "—"}</b></span>
+                  <span className="col-span-2 text-muted-foreground">
+                    Comp. × Larg.: <b className="text-foreground">{a.comprimento ?? "—"} × {a.largura ?? "—"} mm</b>
+                  </span>
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox checked={item.agrup.chapaRecebida} onCheckedChange={() => toggleChapa(item.solic.id, item.agrup.id)} />
+                <label className="flex items-center gap-2 cursor-pointer pt-0.5">
+                  <Checkbox checked={a.chapaRecebida} onCheckedChange={() => toggleChapa(item.solic.id, a.id)} />
                   <span>Chapa recebida pela preparação</span>
                 </label>
                 <div className="grid grid-cols-6 gap-1 pt-1">
@@ -170,7 +214,7 @@ function EncarregadoPage() {
                       key={d.iso}
                       onClick={() => tryAlocar(item, d.iso)}
                       className="text-[10px] px-1 py-1 rounded bg-primary/20 hover:bg-primary/40 text-primary font-bold"
-                      title={`Alocar em ${d.label} ${fmtDate(d.iso)}`}
+                      title={`Alocar em ${d.label} ${fmtDate(d.iso)} · ${maquina} · ${turno}`}
                     >
                       {d.label}
                     </button>
@@ -197,7 +241,7 @@ function EncarregadoPage() {
                     <div className="text-sm font-bold font-mono">{fmtDate(d.iso)}</div>
                   </div>
                   <div className="text-right text-[10px]">
-                    <div className="text-muted-foreground">Limite</div>
+                    <div className="text-muted-foreground">Limite {turno}</div>
                     <div className="font-mono">{fmtMin(d.limitMin)}</div>
                   </div>
                 </div>
@@ -238,6 +282,11 @@ function EncarregadoPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Legenda das máquinas por tipo — reforço visual */}
+      <div className="text-[10px] text-muted-foreground">
+        Máquinas disponíveis para esta área: {MAQUINAS_POR_TIPO[tipoUsuario].join(" · ")}
       </div>
     </div>
   );

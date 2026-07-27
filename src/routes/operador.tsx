@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { findUser } from "@/lib/auth";
+import { findUser, maquinasDoUsuario } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
 import { StatusBadge } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/operador")({
   ),
 });
 
-const MAQUINAS: Maquina[] = ["CNC-3", "Messer"];
+// MAQUINAS agora vem do tipo do usuário (Chapa/Perfil/Tubo).
 
 const ORDER_STATUS: Record<StatusCorte, number> = {
   "Alocado": 0,
