@@ -100,7 +100,7 @@ function OperadorPage() {
           <Select value={maquina} onValueChange={(v) => setMaquina(v as Maquina)}>
             <SelectTrigger className="w-52 h-12 text-lg font-bold"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {MAQUINAS.map((m) => <SelectItem key={m} value={m} className="text-lg">{m}</SelectItem>)}
+              {maquinasArea.map((m) => <SelectItem key={m} value={m} className="text-lg">{m}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
