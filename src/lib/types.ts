@@ -4,14 +4,18 @@ export type Perfil =
   | "encarregado"
   | "operador";
 
+export type TipoPlano = "Chapa" | "Perfil" | "Tubulação";
+
 export interface Usuario {
   username: string;
   senha: string;
   perfil: Perfil;
   nome: string;
+  /** Obrigatório para encarregado e operador — segmenta a área (Chapa/Perfil/Tubo). */
+  tipo?: TipoPlano;
 }
 
-export type TipoPlano = "Chapa" | "Perfil" | "Tubulação";
+
 
 export type StatusSolicitacao =
   | "Em Fila"
@@ -30,7 +34,9 @@ export type StatusCorte =
   | "Corte Paralisado"
   | "Cortado";
 
-export type Maquina = "CNC-3" | "Messer";
+export type Maquina = "CNC-3" | "Messer" | "Robô-01" | "Robô-02" | "Bodor-D";
+
+export type Turno = "Dia" | "Noite";
 
 export interface LogEntry {
   usuario: string;
@@ -69,6 +75,7 @@ export interface Agrupamento {
   tempoEstMin?: number;
   chapaRecebida: boolean;
   maquina?: Maquina;
+  turno?: Turno;
   diaAlocado?: string; // ISO date yyyy-mm-dd
   statusCorte: StatusCorte;
   validacao?: Validacao;

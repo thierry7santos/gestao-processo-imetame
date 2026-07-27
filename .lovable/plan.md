@@ -1,139 +1,93 @@
-# IME Corte CNC — Planejamento, Programação, Preparação
+## Objetivo
 
-Aplicação MES em Single Page com autenticação por perfil, tema escuro Imetame (verde/preto), responsivo para monitores e tablets horizontais.
+Adicionar exibição do solicitante nas filas, enriquecer os cards do Encarregado, e dividir os logins de Encarregado/Operador por tipo (Chapa/Perfil/Tubo) com máquinas específicas e turnos Dia/Noite selecionáveis no topo da tela.
 
-## Escopo do MVP (v1 completa nesta entrega)
+---
 
-Toda a lógica funciona **client-side** com persistência em `localStorage` (sem backend). Isso permite entregar todas as 6 telas descritas com dados que persistem entre sessões e navegação entre perfis. Se depois quiser multi-usuário real (dados compartilhados entre dispositivos), habilitamos Lovable Cloud numa segunda etapa.
+## 1. Solicitante nas filas (Planejador e Programador)
 
-## Stack e Design System
+- Inserir a coluna **"Solicitante"** entre **ID** e **OS** nas tabelas de fila do Planejador e do Programador (nas 3 filas: Chapa/Perfil/Tubo).
+- Valor exibido: `solic.planejadorCriador`.
 
-- TanStack Start + Tailwind v4 já configurados.
-- Tokens em `src/styles.css`: `--imetame-green` (verde vibrante), superfícies escuras (`--background`, `--card`), alto contraste para chão de fábrica, cores de alerta (laranja "A Revisar", roxo "Em Revisão", verde "Cortado", amarelo "Em Corte", vermelho "Emergência/Divergência").
-- Fontes: Inter (UI) + JetBrains Mono (IDs, códigos de plano).
-- Componentes shadcn: Button, Input, Table, Dialog, Tabs, Select, Checkbox, Badge, Card, Calendar.
-- Charts: `recharts` (já compatível) para KPIs.
-- Estado global: Zustand + persistência em localStorage.
+## 2. Cards de "Disponíveis" do Encarregado
 
-## Estrutura de Rotas
+Enriquecer cada card de agrupamento disponível para alocação, exibindo (além do que já mostra):
+- **Já existem:** ID, Título, Peso, Tempo de máquina.
+- **Novos:** RIR, Material, Espessura, Comprimento × Largura, Qtd de Itens.
+- Layout em grade compacta de 2 colunas para caber na coluna lateral.
+
+## 3. Logins por tipo (Chapa / Perfil / Tubo) — **substituir** os atuais
+
+Em `src/lib/auth.ts` (senha `123`), `Usuario` ganha `tipo?: TipoPlano` (obrigatório p/ encarregado/operador):
 
 ```
-/                       → redireciona para /login ou área do perfil logado
-/login                  → tela única com painel de credenciais de teste
-/_auth/planejador       → interface planejador (+ acesso a dashboard/kpis)
-/_auth/programador      → interface programador (+ acesso a dashboard/kpis)
-/_auth/encarregado      → interface encarregado
-/_auth/operador         → interface operador (layout tablet)
-/_auth/auditoria        → dashboard auditoria (só planejador/programador)
-/_auth/kpis             → central de KPIs (só planejador/programador)
+encarregado_chapa  · Chapa
+encarregado_perfil · Perfil
+encarregado_tubo   · Tubo
+operador_chapa1    · Chapa
+operador_chapa2    · Chapa
+operador_perfil1   · Perfil
+operador_tubo1     · Tubo
 ```
 
-Guard de rota: `beforeLoad` lê sessão do zustand; se perfil não bate, redireciona para a área correta.
+Planejadores e programador permanecem. Painel de credenciais no Login reflete a nova lista.
 
-## Modelo de Dados (localStorage / zustand)
+## 4. Máquinas por tipo + Turnos
 
-```ts
-Solicitacao {
-  id: "#0001" (sequencial imutável),
-  os: "0751.03.001",
-  titulo, tipo: "Chapa"|"Perfil"|"Tubulação",
-  dataNecessidade, descricao, anexos[], emergencia: bool,
-  status: "Em Fila"|"Em Processo"|"Paralisado"|"Concluído"
-         |"A Revisar"|"Em Revisão"|"Revisado"|"Cancelado",
-  planejadorCriador, revisoes[], descricaoRevisao?,
-  numeroPlano?: "1250C", programador?, inicioProg?, fimProg?,
-  tempoOcioso: number, agrupamentos: Agrupamento[],
-  historico: Log[] // {usuario, dataHora, mudanca}
-}
+Em `src/lib/types.ts`:
+- `Maquina`: `"CNC-3" | "Messer" | "Robô-01" | "Robô-02" | "Bodor-D"`.
+- Novo `Turno = "Dia" | "Noite"`.
+- `Agrupamento` ganha `turno?: Turno`.
 
-Agrupamento {
-  nome: "1250C01", pdfUrl,
-  rir, material, espessura, comprimento, largura, qtdItens, peso, tempoEstMin,
-  chapaRecebida: bool, maquina?: "CNC-3"|"Messer",
-  diaAlocado?: ISO, semana?,
-  statusCorte: "Alocado"|"Em Corte"|"Cortado",
-  validacao?: { matOk, rirOk, espOk, compDigitado, largDigitado, divergenciaAceita },
-  inicioCorte?, fimCorte?, operador?, obsOperacao?
-}
-
-Usuario { username, perfil, nome }
-Sessao { usuarioAtual }
+Mapa de máquinas por tipo:
+```
+Chapa  → CNC-3, Messer
+Perfil → Robô-01, Robô-02
+Tubo   → Bodor-D
 ```
 
-Contadores globais: `nextSolicitacaoId` (0001+), `nextPlanoNumero` (1250C+).
+Turnos (janelas informativas; limite diário atual mantido, aplicado por turno):
+- Dia: 07:30 → 17:18.
+- Noite: 18:30 → 04:18 do dia seguinte, contabilizado no `diaAlocado` de início.
+- Limite por turno = limite atual do dia (08:48 seg-sex, 08:00 sáb) — cada turno é um "balde" independente.
 
-## Detalhes por Interface
+## 5. Encarregado — seletores de Máquina **e** Turno no topo
 
-### 1. Login
-- Card central com logo/nome, formulário, e abaixo painel "Credenciais de teste" listando os 6 usuários.
-- Valida contra lista hardcoded, seta sessão, redireciona.
+- No cabeçalho da tela, ao lado do seletor **Máquina ativa**, adicionar o seletor **Turno ativo** (`Dia` / `Noite`). Exatamente o mesmo padrão do seletor de máquina.
+- Toda a visualização do calendário e toda alocação passam a considerar o par `(máquina, turno)` selecionado:
+  - Cards do calendário mostram apenas blocos cuja `maquina === maquina` **e** `turno === turno` selecionados.
+  - Barra de uso/limite/peso calculada apenas sobre esses blocos.
+  - Ao clicar em um dia para alocar, o agrupamento é gravado com o `turno` atualmente selecionado.
+- `EncarregadoPage` também usa `user.tipo` para:
+  - Filtrar a lista "Disponíveis" a agrupamentos cuja `Solicitacao.tipo === user.tipo`.
+  - Restringir o `Select` de máquina às máquinas do tipo (default = primeira).
+- Nenhuma UI de "Dia/Noite empilhados" nos cards — a segmentação é feita pelos seletores globais, exatamente como já é feito com máquina.
 
-### 2. Planejador
-- Formulário nova solicitação com validação: botão Emergência só ativa se `dataNecessidade === hoje`.
-- Tabela "Fila de Planos" ordenada por dataNecessidade, com colunas ID, OS, Tipo, Data, Status, Máquina, Data Prevista, Tempo.
-- Ao clicar em concluída → modal com nº plano geral + lista de PDFs por agrupamento.
-- Botões Editar/Revisar respeitando as regras de status.
-- Log de auditoria por solicitação.
+## 6. Operador — filtragem por tipo
 
-### 3. Programador
-- Tabela com filtros; emergências e "A Revisar/Em Revisão" fixadas no topo via sort.
-- Botão "Iniciar Plano" gera `1250C` sequencial, registra programador/hora.
-- Área upload PDFs: parseia nome do arquivo → cria agrupamentos automaticamente.
-- Botão importar Excel (.xlsx via `xlsx` lib) → distribui metadados por nome do agrupamento.
-- Modal detalhes: nº plano, tempos, obs. Botões separados Salvar Observações / Concluir.
-- Cronômetro de tempo ocioso quando "Paralisado".
-- Filtro de status oculta Concluídos/Cancelados por padrão.
-- Fluxo revisão A Revisar → Em Revisão → Revisado.
+- `OperadorPage` lista apenas agrupamentos cuja `Solicitacao.tipo === user.tipo` e cuja `maquina` esteja em `MAQUINAS_POR_TIPO[user.tipo]`. Demais fluxos (Poka-Yoke, paradas) inalterados.
 
-### 4. Encarregado
-- Seletor de semana (semana atual + próximas) no topo.
-- Seletor de máquina ativa (CNC-3 / Messer) → calendário independente.
-- Lista lateral de agrupamentos disponíveis (só de solicitações Concluídas/A Revisar/Em Revisão/Revisado).
-- Agrupamentos "A Revisar/Em Revisão/Revisado" com animação pulse laranja/roxo.
-- Drag para alocar (ou clique em dia) — só permite se "Chapa Recebida" = Sim.
-- Cálculo: limite 8h48 seg-sex, 8h sáb; mostra tempo restante e peso acumulado por dia.
-- Histórico: blocos permanecem no dia após corte, mudando cor: verde=Cortado, amarelo=Em Corte.
+## 7. Persistência e migração
 
-### 5. Operador (Tablet)
-- Layout landscape, controles gigantes.
-- Seletor de máquina no topo → filtra agrupamentos alocados para hoje nessa máquina.
-- Cards grandes por agrupamento, verde para já cortados, botão "Abrir PDF".
-- Modal validação: 3 checkboxes + 2 inputs numéricos (Comp, Larg).
-- Compara com valor real; se divergência > 50mm abre dialog de confirmação, grava `divergenciaAceita`.
-- Botões gigantes Início / Fim de corte gravam timestamps + operador.
+- `store.ts` (persist): bump de versão + migração:
+  - Descarta sessão cujo `username` não existe mais.
+  - Marca agrupamentos sem `turno` como `"Dia"`.
 
-### 6. Auditoria (Planejador/Programador)
-- Filtros: ID, plano, período, máquina, OS, status.
-- Tabela comparativa Real x Digitado; célula pisca vermelho se |desvio|>50mm.
-- Ao expandir linha → timeline: criador, editores, revisores, programador, tempos ociosos, operador, observações.
-
-### 7. KPIs (Planejador/Programador)
-- Tabs "Programação" e "Corte".
-- Filtros globais: semanal (seg-sáb), mensal, operador, máquina.
-- Gráficos recharts:
-  - Estimado vs Real (barras agrupadas dia/semana/mês).
-  - Peso de aço cortado (linhas/barras).
-  - Eficiência por operador e máquina (barras horizontais + %).
-- Cards de resumo: planos paralisados, tempo ocioso total, produtividade.
+---
 
 ## Detalhes técnicos
 
-- `src/lib/store.ts` — zustand store com persist middleware.
-- `src/lib/auth.ts` — usuários hardcoded + hook `useSession`.
-- `src/lib/seed.ts` — dados de demonstração para popular estados/dashboard na primeira carga.
-- `src/lib/formatters.ts` — datas, minutos→hh:mm, semanas ISO.
-- `src/components/ui/*` — shadcn existente.
-- `src/components/app/*` — Layout com header (nome+perfil+logout), Sidebar por perfil.
-- `src/routes/_auth/*` — layout protegido que valida sessão e monta chrome.
-- Ícones: lucide-react.
-- Excel parsing: adiciona `xlsx` via bun. PDFs: guardamos `File → object URL` em memória (não persistem entre reloads — aceitável para demo; alertar isso na UI).
+**Arquivos a alterar:**
+- `src/lib/types.ts` — `Maquina` estendida, `Turno`, `Usuario.tipo`, `Agrupamento.turno`.
+- `src/lib/auth.ts` — nova lista `USUARIOS`, `MAQUINAS_POR_TIPO`, helper `maquinasDoUsuario`.
+- `src/lib/store.ts` — `alocarAgrupamento(..., turno)`, versão + migração.
+- `src/services/dataService.ts` — assinatura com `turno` + `// TODO` p/ coluna SQL.
+- `src/lib/seed.ts` — `turno: "Dia"` nos agrupamentos alocados do seed.
+- `src/routes/planejador.tsx` — coluna "Solicitante".
+- `src/routes/programador.tsx` — coluna "Solicitante" nas 3 filas.
+- `src/routes/encarregado.tsx` — filtro por tipo, máquinas dinâmicas, seletor de **Turno** no header, cards enriquecidos, filtragem de blocos e alocação por `(máquina, turno)`.
+- `src/routes/operador.tsx` — filtro por tipo/máquinas do usuário.
+- `src/routes/login.tsx` — painel de credenciais atualizado.
+- `README.md` — usuários, máquinas por tipo e turnos.
 
-## O que NÃO entra nesta v1
-- Backend real / sincronização multi-dispositivo.
-- Upload persistente de PDFs/Excel (arquivos ficam por sessão).
-- Notificações push.
-
-Posso habilitar Lovable Cloud depois se quiser persistência real, logins de verdade e compartilhamento entre usuários.
-
-## Entregáveis desta iteração
-Aplicação navegável com os 6 perfis, dados semente, todos os fluxos descritos funcionando localmente, KPIs com gráficos populados a partir dos dados de demonstração.
+**Fora de escopo:** particularidades adicionais de tela por tipo além de máquinas/turnos; KPIs segmentados por turno.

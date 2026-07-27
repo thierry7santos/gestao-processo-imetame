@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { findUser } from "@/lib/auth";
+import { findUser, maquinasDoUsuario } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
 import { StatusBadge } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/operador")({
   ),
 });
 
-const MAQUINAS: Maquina[] = ["CNC-3", "Messer"];
+// MAQUINAS agora vem do tipo do usuário (Chapa/Perfil/Tubo).
 
 const ORDER_STATUS: Record<StatusCorte, number> = {
   "Alocado": 0,
@@ -55,7 +55,9 @@ function OperadorPage() {
   const user = findUser(sessao.username)!;
   const solicitacoes = useStore((s) => s.solicitacoes);
 
-  const [maquina, setMaquina] = useState<Maquina>("CNC-3");
+  const maquinasArea = useMemo(() => maquinasDoUsuario(user), [user]);
+  const tipoUsuario = user.tipo ?? "Chapa";
+  const [maquina, setMaquina] = useState<Maquina>(maquinasArea[0]);
   const [openValid, setOpenValid] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
   const [openFinalizar, setOpenFinalizar] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
   const [openParar, setOpenParar] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
@@ -90,7 +92,7 @@ function OperadorPage() {
     <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold">Operação · Chão de fábrica</h1>
+          <h1 className="text-3xl font-extrabold">Operação · Chão de fábrica <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
           <p className="text-sm text-muted-foreground">Turno de hoje — {new Date().toLocaleDateString("pt-BR")} · Operador: <b>{user.nome}</b></p>
         </div>
         <div>
@@ -98,7 +100,7 @@ function OperadorPage() {
           <Select value={maquina} onValueChange={(v) => setMaquina(v as Maquina)}>
             <SelectTrigger className="w-52 h-12 text-lg font-bold"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {MAQUINAS.map((m) => <SelectItem key={m} value={m} className="text-lg">{m}</SelectItem>)}
+              {maquinasArea.map((m) => <SelectItem key={m} value={m} className="text-lg">{m}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

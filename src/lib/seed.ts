@@ -56,20 +56,22 @@ export function seedData(): {
     agrupamentos: [
       agrup("s1-a1", "1247C01", {
         maquina: "CNC-3",
+        turno: "Dia",
         diaAlocado: addDays(hoje, -1),
         statusCorte: "Cortado",
         inicioCorte: nowISO(),
         fimCorte: nowISO(),
-        operador: "João Operador CNC",
+        operador: "João Op. Chapa",
         validacao: { matOk: true, rirOk: true, espOk: true, compDigitado: 6000, largDigitado: 2000, divergenciaAceita: false },
       }),
       agrup("s1-a2", "1247C02", {
         maquina: "CNC-3",
+        turno: "Dia",
         diaAlocado: addDays(hoje, -1),
         statusCorte: "Cortado",
         inicioCorte: nowISO(),
         fimCorte: nowISO(),
-        operador: "João Operador CNC",
+        operador: "João Op. Chapa",
         comprimento: 6000, largura: 2000,
         validacao: { matOk: true, rirOk: true, espOk: true, compDigitado: 6080, largDigitado: 2005, divergenciaAceita: true },
       }),
@@ -105,7 +107,7 @@ export function seedData(): {
     id: "#0003",
     os: "0751.04.010",
     titulo: "Estrutura de skid",
-    tipo: "Perfil",
+    tipo: "Chapa",
     dataNecessidade: addDays(hoje, 3),
     descricao: "Perfis W e cantoneiras conforme lista.",
     anexos: [{ nome: "LISTA-SKID.pdf" }],
@@ -119,9 +121,9 @@ export function seedData(): {
     fimProg: nowISO(),
     tempoOciosoMin: 35,
     agrupamentos: [
-      agrup("s3-a1", "1248C01", { maquina: "CNC-3", diaAlocado: hoje, statusCorte: "Alocado", tempoEstMin: 110, peso: 1420 }),
-      agrup("s3-a2", "1248C02", { maquina: "Messer", diaAlocado: hoje, statusCorte: "Alocado", tempoEstMin: 85, peso: 980 }),
-      agrup("s3-a3", "1248C03", { maquina: "CNC-3", diaAlocado: addDays(hoje, 1), statusCorte: "Alocado", tempoEstMin: 120, peso: 1600 }),
+      agrup("s3-a1", "1248C01", { maquina: "CNC-3", turno: "Dia", diaAlocado: hoje, statusCorte: "Alocado", tempoEstMin: 110, peso: 1420 }),
+      agrup("s3-a2", "1248C02", { maquina: "Messer", turno: "Dia", diaAlocado: hoje, statusCorte: "Alocado", tempoEstMin: 85, peso: 980 }),
+      agrup("s3-a3", "1248C03", { maquina: "CNC-3", turno: "Noite", diaAlocado: hoje, statusCorte: "Alocado", tempoEstMin: 120, peso: 1600 }),
     ],
     historico: [
       { usuario: "Carlos Planejador", dataHora: nowISO(), mudanca: "Solicitação criada" },
@@ -167,7 +169,7 @@ export function seedData(): {
     fimProg: nowISO(),
     tempoOciosoMin: 8,
     agrupamentos: [
-      agrup("s5-a1", "1249C01", { maquina: "CNC-3", diaAlocado: addDays(hoje, 1), statusCorte: "Alocado" }),
+      agrup("s5-a1", "1249C01", { maquina: "CNC-3", turno: "Dia", diaAlocado: addDays(hoje, 1), statusCorte: "Alocado" }),
     ],
     historico: [
       { usuario: "Ana Planejadora Auxiliar", dataHora: nowISO(), mudanca: "Solicitou revisão de plano concluído" },

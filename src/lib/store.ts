@@ -7,6 +7,7 @@ import type {
   Agrupamento,
   LogEntry,
   Maquina,
+  Turno,
   Validacao,
 } from "./types";
 import { nowISO } from "./formatters";
@@ -25,7 +26,7 @@ interface Actions {
   addAgrupamentosDePDFs: (id: string, arquivos: { nome: string; url?: string }[], usuario: string) => void;
   aplicarMetadadosExcel: (id: string, rows: Record<string, unknown>[], usuario: string) => void;
   toggleChapaRecebida: (solicId: string, agrupId: string) => void;
-  alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, diaISO: string, usuario: string) => void;
+  alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
   paralisarCorte: (solicId: string, agrupId: string, operador: string, motivo: string) => void;
@@ -255,7 +256,7 @@ export const useStore = create<AppState & Actions>()(
         });
       },
 
-      alocarAgrupamento: (solicId, agrupId, maquina, diaISO, usuario) => {
+      alocarAgrupamento: (solicId, agrupId, maquina, turno, diaISO, usuario) => {
         set({
           solicitacoes: get().solicitacoes.map((s) =>
             s.id === solicId
@@ -263,10 +264,10 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId
-                      ? { ...a, maquina, diaAlocado: diaISO, statusCorte: "Alocado" }
+                      ? { ...a, maquina, turno, diaAlocado: diaISO, statusCorte: "Alocado" }
                       : a,
                   ),
-                  historico: [...s.historico, log(usuario, `Alocou ${a_(s, agrupId)} em ${maquina} · ${diaISO}`)],
+                  historico: [...s.historico, log(usuario, `Alocou ${a_(s, agrupId)} em ${maquina} · ${turno} · ${diaISO}`)],
                 }
               : s,
           ),
@@ -281,7 +282,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado"
-                      ? { ...a, maquina: undefined, diaAlocado: undefined, statusCorte: "Aguardando" }
+                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Aguardando" }
                       : a,
                   ),
                 }
@@ -419,6 +420,29 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
+      version: 2,
+      migrate: (persistedState: unknown, _version: number) => {
+        const s = (persistedState ?? {}) as Partial<AppState>;
+        // v2: novos usernames por tipo — descarta sessões antigas.
+        const validUsernames = new Set([
+          "planejador1","planejador2","programador1",
+          "encarregado_chapa","encarregado_perfil","encarregado_tubo",
+          "operador_chapa1","operador_chapa2","operador_perfil1","operador_tubo1",
+        ]);
+        if (s.sessao && !validUsernames.has(s.sessao.username)) {
+          s.sessao = null;
+        }
+        // v2: agrupamentos alocados sem turno viram Dia por padrão.
+        if (Array.isArray(s.solicitacoes)) {
+          s.solicitacoes = s.solicitacoes.map((sol) => ({
+            ...sol,
+            agrupamentos: sol.agrupamentos.map((a) =>
+              a.diaAlocado && !a.turno ? { ...a, turno: "Dia" as const } : a,
+            ),
+          }));
+        }
+        return s as AppState & Actions;
+      },
       onRehydrateStorage: () => (state) => {
         if (state && !state.seeded) {
           const seed = seedData();
