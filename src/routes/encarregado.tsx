@@ -16,6 +16,7 @@ import type { Agrupamento, Maquina, Solicitacao, Turno } from "@/lib/types";
 import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar } from "@/services/dataService";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/encarregado")({
   component: () => (
@@ -208,6 +209,7 @@ function EncarregadoPage() {
                   <Checkbox checked={a.chapaRecebida} onCheckedChange={() => toggleChapa(item.solic.id, a.id)} />
                   <span>Chapa recebida pela preparação</span>
                 </label>
+                <div className="pt-0.5"><DesafioButton solic={item.solic} agrup={a} /></div>
                 <div className="grid grid-cols-6 gap-1 pt-1">
                   {dias.map((d) => (
                     <button

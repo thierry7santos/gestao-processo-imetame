@@ -10,12 +10,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
 import { fmtDate, fmtDateTime, fmtMin, minutesBetween } from "@/lib/formatters";
 import type { Maquina, StatusSolicitacao } from "@/lib/types";
-import { ChevronDown } from "lucide-react";
+import { findUser, perfilLabel } from "@/lib/auth";
+import { ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/auditoria")({
   component: () => (
