@@ -19,15 +19,51 @@ import { Route as EncarregadoRouteImport } from './routes/encarregado'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
 
-const ProgramadorRoute = ProgramadorRouteImport.update({ id: '/programador', path: '/programador', getParentRoute: () => rootRouteImport } as any)
-const PlanejadorRoute = PlanejadorRouteImport.update({ id: '/planejador', path: '/planejador', getParentRoute: () => rootRouteImport } as any)
-const OperadorRoute = OperadorRouteImport.update({ id: '/operador', path: '/operador', getParentRoute: () => rootRouteImport } as any)
-const MateriaisRoute = MateriaisRouteImport.update({ id: '/materiais', path: '/materiais', getParentRoute: () => rootRouteImport } as any)
-const LoginRoute = LoginRouteImport.update({ id: '/login', path: '/login', getParentRoute: () => rootRouteImport } as any)
-const KpisRoute = KpisRouteImport.update({ id: '/kpis', path: '/kpis', getParentRoute: () => rootRouteImport } as any)
-const EncarregadoRoute = EncarregadoRouteImport.update({ id: '/encarregado', path: '/encarregado', getParentRoute: () => rootRouteImport } as any)
-const AuditoriaRoute = AuditoriaRouteImport.update({ id: '/auditoria', path: '/auditoria', getParentRoute: () => rootRouteImport } as any)
-const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
+const ProgramadorRoute = ProgramadorRouteImport.update({
+  id: '/programador',
+  path: '/programador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanejadorRoute = PlanejadorRouteImport.update({
+  id: '/planejador',
+  path: '/planejador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperadorRoute = OperadorRouteImport.update({
+  id: '/operador',
+  path: '/operador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MateriaisRoute = MateriaisRouteImport.update({
+  id: '/materiais',
+  path: '/materiais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KpisRoute = KpisRouteImport.update({
+  id: '/kpis',
+  path: '/kpis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EncarregadoRoute = EncarregadoRouteImport.update({
+  id: '/encarregado',
+  path: '/encarregado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,10 +101,38 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auditoria' | '/encarregado' | '/kpis' | '/login' | '/materiais' | '/operador' | '/planejador' | '/programador'
+  fullPaths:
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/materiais'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auditoria' | '/encarregado' | '/kpis' | '/login' | '/materiais' | '/operador' | '/planejador' | '/programador'
-  id: '__root__' | '/' | '/auditoria' | '/encarregado' | '/kpis' | '/login' | '/materiais' | '/operador' | '/planejador' | '/programador'
+  to:
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/materiais'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
+  id:
+    | '__root__'
+    | '/'
+    | '/auditoria'
+    | '/encarregado'
+    | '/kpis'
+    | '/login'
+    | '/materiais'
+    | '/operador'
+    | '/planejador'
+    | '/programador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -85,29 +149,83 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/programador': { id: '/programador'; path: '/programador'; fullPath: '/programador'; preLoaderRoute: typeof ProgramadorRouteImport; parentRoute: typeof rootRouteImport }
-    '/planejador': { id: '/planejador'; path: '/planejador'; fullPath: '/planejador'; preLoaderRoute: typeof PlanejadorRouteImport; parentRoute: typeof rootRouteImport }
-    '/operador': { id: '/operador'; path: '/operador'; fullPath: '/operador'; preLoaderRoute: typeof OperadorRouteImport; parentRoute: typeof rootRouteImport }
-    '/materiais': { id: '/materiais'; path: '/materiais'; fullPath: '/materiais'; preLoaderRoute: typeof MateriaisRouteImport; parentRoute: typeof rootRouteImport }
-    '/login': { id: '/login'; path: '/login'; fullPath: '/login'; preLoaderRoute: typeof LoginRouteImport; parentRoute: typeof rootRouteImport }
-    '/kpis': { id: '/kpis'; path: '/kpis'; fullPath: '/kpis'; preLoaderRoute: typeof KpisRouteImport; parentRoute: typeof rootRouteImport }
-    '/encarregado': { id: '/encarregado'; path: '/encarregado'; fullPath: '/encarregado'; preLoaderRoute: typeof EncarregadoRouteImport; parentRoute: typeof rootRouteImport }
-    '/auditoria': { id: '/auditoria'; path: '/auditoria'; fullPath: '/auditoria'; preLoaderRoute: typeof AuditoriaRouteImport; parentRoute: typeof rootRouteImport }
-    '/': { id: '/'; path: '/'; fullPath: '/'; preLoaderRoute: typeof IndexRouteImport; parentRoute: typeof rootRouteImport }
+    '/programador': {
+      id: '/programador'
+      path: '/programador'
+      fullPath: '/programador'
+      preLoaderRoute: typeof ProgramadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planejador': {
+      id: '/planejador'
+      path: '/planejador'
+      fullPath: '/planejador'
+      preLoaderRoute: typeof PlanejadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operador': {
+      id: '/operador'
+      path: '/operador'
+      fullPath: '/operador'
+      preLoaderRoute: typeof OperadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/materiais': {
+      id: '/materiais'
+      path: '/materiais'
+      fullPath: '/materiais'
+      preLoaderRoute: typeof MateriaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kpis': {
+      id: '/kpis'
+      path: '/kpis'
+      fullPath: '/kpis'
+      preLoaderRoute: typeof KpisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encarregado': {
+      id: '/encarregado'
+      path: '/encarregado'
+      fullPath: '/encarregado'
+      preLoaderRoute: typeof EncarregadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute, AuditoriaRoute, EncarregadoRoute, KpisRoute, LoginRoute, MateriaisRoute, OperadorRoute, PlanejadorRoute, ProgramadorRoute,
+  IndexRoute: IndexRoute,
+  AuditoriaRoute: AuditoriaRoute,
+  EncarregadoRoute: EncarregadoRoute,
+  KpisRoute: KpisRoute,
+  LoginRoute: LoginRoute,
+  MateriaisRoute: MateriaisRoute,
+  OperadorRoute: OperadorRoute,
+  PlanejadorRoute: PlanejadorRoute,
+  ProgramadorRoute: ProgramadorRoute,
 }
-export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
