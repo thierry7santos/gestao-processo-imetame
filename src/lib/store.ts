@@ -9,6 +9,8 @@ import type {
   Maquina,
   Turno,
   Validacao,
+  Desafio,
+  Perfil,
 } from "./types";
 import { nowISO } from "./formatters";
 import { seedData } from "./seed";
@@ -26,6 +28,8 @@ interface Actions {
   addAgrupamentosDePDFs: (id: string, arquivos: { nome: string; url?: string }[], usuario: string) => void;
   aplicarMetadadosExcel: (id: string, rows: Record<string, unknown>[], usuario: string) => void;
   toggleChapaRecebida: (solicId: string, agrupId: string) => void;
+  liberarSolicitacao: (solicId: string, usuario: string) => void;
+  movimentarAgrupamento: (solicId: string, agrupId: string, usuario: string) => void;
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
@@ -33,6 +37,8 @@ interface Actions {
   retomarCorte: (solicId: string, agrupId: string, operador: string) => void;
   finalizarCorte: (solicId: string, agrupId: string, operador: string, obs?: string) => void;
   aplicarPassivosAnteriores: () => number;
+  addDesafio: (d: Omit<Desafio, "id" | "criadoEm" | "status">) => void;
+  resolverDesafio: (id: string, resolucao: string, usuario: string) => void;
   resetSeed: () => void;
 }
 
@@ -45,10 +51,12 @@ export const useStore = create<AppState & Actions>()(
     (set, get) => ({
       sessao: null,
       solicitacoes: [],
+      desafios: [],
       nextSolicId: 1,
       nextPlanoNum: 1250,
       nextPlanoNumP: 150,
       nextPlanoNumT: 320,
+      nextDesafioId: 1,
       seeded: false,
 
       login: (username) => set({ sessao: { username } }),
@@ -107,19 +115,14 @@ export const useStore = create<AppState & Actions>()(
         set({
           solicitacoes: get().solicitacoes.map((s) => {
             if (s.id !== id) return s;
-            let extra: Partial<Solicitacao> = {};
+            const extra: Partial<Solicitacao> = {};
             if (status === "Paralisado") extra.paralisadoDesde = nowISO();
             if (s.status === "Paralisado" && status !== "Paralisado" && s.paralisadoDesde) {
               const delta = Math.round((Date.now() - new Date(s.paralisadoDesde).getTime()) / 60000);
               extra.tempoOciosoMin = s.tempoOciosoMin + delta;
               extra.paralisadoDesde = undefined;
             }
-            return {
-              ...s,
-              ...extra,
-              status,
-              historico: [...s.historico, log(usuario, `Status → ${status}`)],
-            };
+            return { ...s, ...extra, status, historico: [...s.historico, log(usuario, `Status → ${status}`)] };
           }),
         });
       },
@@ -132,11 +135,9 @@ export const useStore = create<AppState & Actions>()(
         const num =
           suffix === "P" ? get().nextPlanoNumP : suffix === "T" ? get().nextPlanoNumT : get().nextPlanoNum;
         const patch: Partial<AppState> =
-          suffix === "P"
-            ? { nextPlanoNumP: num + 1 }
-            : suffix === "T"
-              ? { nextPlanoNumT: num + 1 }
-              : { nextPlanoNum: num + 1 };
+          suffix === "P" ? { nextPlanoNumP: num + 1 }
+          : suffix === "T" ? { nextPlanoNumT: num + 1 }
+          : { nextPlanoNum: num + 1 };
         set({
           ...(patch as AppState),
           solicitacoes: get().solicitacoes.map((s) =>
@@ -158,16 +159,7 @@ export const useStore = create<AppState & Actions>()(
         set({
           solicitacoes: get().solicitacoes.map((s) =>
             s.id === id
-              ? {
-                  ...s,
-                  status: "Concluído",
-                  fimProg: nowISO(),
-                  agrupamentos: s.agrupamentos.map((a) => ({
-                    ...a,
-                    statusCorte: a.statusCorte === "Aguardando" ? "Aguardando" : a.statusCorte,
-                  })),
-                  historico: [...s.historico, log(usuario, "Concluiu programação")],
-                }
+              ? { ...s, status: "Concluído", fimProg: nowISO(), historico: [...s.historico, log(usuario, "Concluiu programação")] }
               : s,
           ),
         });
@@ -177,11 +169,7 @@ export const useStore = create<AppState & Actions>()(
         set({
           solicitacoes: get().solicitacoes.map((s) =>
             s.id === id
-              ? {
-                  ...s,
-                  observacoesProgramador: obs,
-                  historico: [...s.historico, log(usuario, "Salvou observações do programador")],
-                }
+              ? { ...s, observacoesProgramador: obs, historico: [...s.historico, log(usuario, "Salvou observações do programador")] }
               : s,
           ),
         });
@@ -245,11 +233,44 @@ export const useStore = create<AppState & Actions>()(
         set({
           solicitacoes: get().solicitacoes.map((s) =>
             s.id === solicId
+              ? { ...s, agrupamentos: s.agrupamentos.map((a) => a.id === agrupId ? { ...a, chapaRecebida: !a.chapaRecebida } : a) }
+              : s,
+          ),
+        });
+      },
+
+      liberarSolicitacao: (solicId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) => {
+            if (s.id !== solicId) return s;
+            let n = 0;
+            const agrupamentos = s.agrupamentos.map((a) => {
+              if (a.statusCorte === "Aguardando") {
+                n++;
+                return { ...a, statusCorte: "Liberado" as const, liberadoEm: ts, liberadoPor: usuario };
+              }
+              return a;
+            });
+            if (n === 0) return s;
+            return { ...s, agrupamentos, historico: [...s.historico, log(usuario, `Liberou ${n} agrupamento(s) para Materiais`)] };
+          }),
+        });
+      },
+
+      movimentarAgrupamento: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
               ? {
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
-                    a.id === agrupId ? { ...a, chapaRecebida: !a.chapaRecebida } : a,
+                    a.id === agrupId && a.statusCorte === "Liberado"
+                      ? { ...a, statusCorte: "Movimentado", movimentadoEm: ts, movimentadoPor: usuario }
+                      : a,
                   ),
+                  historico: [...s.historico, log(usuario, `Materiais movimentou ${a_(s, agrupId)}`)],
                 }
               : s,
           ),
@@ -282,7 +303,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado"
-                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Aguardando" }
+                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado" }
                       : a,
                   ),
                 }
@@ -299,13 +320,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId
-                      ? {
-                          ...a,
-                          statusCorte: "Em Corte",
-                          inicioCorte: nowISO(),
-                          operador,
-                          validacao,
-                        }
+                      ? { ...a, statusCorte: "Em Corte", inicioCorte: nowISO(), operador, validacao }
                       : a,
                   ),
                   historico: [...s.historico, log(operador, `Iniciou corte de ${a_(s, agrupId)}`)],
@@ -322,9 +337,7 @@ export const useStore = create<AppState & Actions>()(
               ? {
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
-                    a.id === agrupId
-                      ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador }
-                      : a,
+                    a.id === agrupId ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador } : a,
                   ),
                   historico: [...s.historico, log(operador, `Finalizou corte de ${a_(s, agrupId)}`)],
                 }
@@ -342,11 +355,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Em Corte"
-                      ? {
-                          ...a,
-                          statusCorte: "Corte Paralisado",
-                          paradas: [...(a.paradas ?? []), { inicio: ts, motivo, operador }],
-                        }
+                      ? { ...a, statusCorte: "Corte Paralisado", paradas: [...(a.paradas ?? []), { inicio: ts, motivo, operador }] }
                       : a,
                   ),
                   historico: [...s.historico, log(operador, `Paralisou corte de ${a_(s, agrupId)} — motivo: ${motivo}`)],
@@ -378,7 +387,6 @@ export const useStore = create<AppState & Actions>()(
       },
 
       aplicarPassivosAnteriores: () => {
-        // Segunda-feira desta semana (semana vigente contendo hoje)
         const hoje = new Date();
         const dow = hoje.getDay();
         const diff = dow === 0 ? -6 : 1 - dow;
@@ -392,14 +400,15 @@ export const useStore = create<AppState & Actions>()(
             ...s,
             agrupamentos: s.agrupamentos.map((a) => {
               if (!a.diaAlocado) return a;
-              if (a.statusCorte === "Cortado") return a; // Histórico verde permanece.
-              if (a.diaAlocado >= mondayISO) return a; // Semana vigente ou futuras: mantém.
+              if (a.statusCorte === "Cortado") return a;
+              if (a.diaAlocado >= mondayISO) return a;
               count++;
               return {
                 ...a,
                 diaAlocado: undefined,
                 maquina: undefined,
-                statusCorte: "Aguardando",
+                turno: undefined,
+                statusCorte: "Movimentado",
                 isPassivoAnterior: true,
               };
             }),
@@ -413,44 +422,72 @@ export const useStore = create<AppState & Actions>()(
         return count;
       },
 
+      addDesafio: (d) => {
+        const id = `D-${String(get().nextDesafioId).padStart(4, "0")}`;
+        const novo: Desafio = { ...d, id, status: "Aberto", criadoEm: nowISO() };
+        const solic = get().solicitacoes.find((x) => x.id === d.solicId);
+        set({
+          desafios: [novo, ...get().desafios],
+          nextDesafioId: get().nextDesafioId + 1,
+          solicitacoes: solic
+            ? get().solicitacoes.map((s) =>
+                s.id === d.solicId
+                  ? { ...s, historico: [...s.historico, log(d.criadoPor, `Desafio ${id} aberto (${d.agrupNome ?? "solicitação"}) → ${labelPerfil(d.atribuidoA)}`)] }
+                  : s,
+              )
+            : get().solicitacoes,
+        });
+      },
+
+      resolverDesafio: (id, resolucao, usuario) => {
+        const ts = nowISO();
+        const alvo = get().desafios.find((d) => d.id === id);
+        set({
+          desafios: get().desafios.map((d) =>
+            d.id === id ? { ...d, status: "Resolvido", resolucao: resolucao || d.resolucao, resolvidoPor: usuario, resolvidoEm: ts } : d,
+          ),
+          solicitacoes: alvo
+            ? get().solicitacoes.map((s) =>
+                s.id === alvo.solicId
+                  ? { ...s, historico: [...s.historico, log(usuario, `Desafio ${id} resolvido`)] }
+                  : s,
+              )
+            : get().solicitacoes,
+        });
+      },
+
       resetSeed: () => {
         const seed = seedData();
-        set({ ...seed, sessao: get().sessao, seeded: true });
+        set({ ...seed, desafios: seed.desafios ?? [], nextDesafioId: seed.nextDesafioId ?? 1, sessao: get().sessao, seeded: true });
       },
     }),
     {
       name: "ime-cnc-store",
-      version: 2,
-      migrate: (persistedState: unknown, _version: number) => {
-        const s = (persistedState ?? {}) as Partial<AppState>;
-        // v2: novos usernames por tipo — descarta sessões antigas.
-        const validUsernames = new Set([
-          "planejador1","planejador2","programador1",
-          "encarregado_chapa","encarregado_perfil","encarregado_tubo",
-          "operador_chapa1","operador_chapa2","operador_perfil1","operador_tubo1",
-        ]);
-        if (s.sessao && !validUsernames.has(s.sessao.username)) {
-          s.sessao = null;
-        }
-        // v2: agrupamentos alocados sem turno viram Dia por padrão.
-        if (Array.isArray(s.solicitacoes)) {
-          s.solicitacoes = s.solicitacoes.map((sol) => ({
-            ...sol,
-            agrupamentos: sol.agrupamentos.map((a) =>
-              a.diaAlocado && !a.turno ? { ...a, turno: "Dia" as const } : a,
-            ),
-          }));
-        }
-        return s as AppState & Actions;
+      version: 3,
+      // v3: reset completo — novo fluxo com Materiais, novos logins e novos statuses.
+      migrate: () => {
+        return {
+          sessao: null,
+          solicitacoes: [],
+          desafios: [],
+          nextSolicId: 1,
+          nextPlanoNum: 1250,
+          nextPlanoNumP: 150,
+          nextPlanoNumT: 320,
+          nextDesafioId: 1,
+          seeded: false,
+        } as unknown as AppState & Actions;
       },
       onRehydrateStorage: () => (state) => {
         if (state && !state.seeded) {
           const seed = seedData();
           state.solicitacoes = seed.solicitacoes;
+          state.desafios = seed.desafios ?? [];
           state.nextSolicId = seed.nextSolicId;
           state.nextPlanoNum = seed.nextPlanoNum;
           state.nextPlanoNumP = seed.nextPlanoNumP;
           state.nextPlanoNumT = seed.nextPlanoNumT;
+          state.nextDesafioId = seed.nextDesafioId ?? 1;
           state.seeded = true;
         }
       },
@@ -460,6 +497,14 @@ export const useStore = create<AppState & Actions>()(
 
 function a_(s: Solicitacao, agrupId: string): string {
   return s.agrupamentos.find((x) => x.id === agrupId)?.nome ?? agrupId;
+}
+
+function labelPerfil(p: Perfil): string {
+  return p === "encarregado" ? "Preparação"
+    : p === "materiais" ? "Materiais"
+    : p === "planejador" ? "Planejamento"
+    : p === "programador" ? "Programação"
+    : "Operação";
 }
 
 export function useSession() {
