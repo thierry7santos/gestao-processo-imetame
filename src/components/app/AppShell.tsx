@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 import { findUser, homeFor } from "@/lib/auth";
-import { LogOut, Factory } from "lucide-react";
+import { LogOut, Factory, AlertCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Perfil } from "@/lib/types";
 
@@ -16,12 +16,20 @@ const NAV: Record<Perfil, { to: string; label: string }[]> = {
     { to: "/auditoria", label: "Auditoria" },
     { to: "/kpis", label: "KPIs" },
   ],
-  encarregado: [{ to: "/encarregado", label: "Preparação" }],
+  materiais: [
+    { to: "/materiais", label: "Materiais" },
+    { to: "/auditoria", label: "Auditoria" },
+  ],
+  encarregado: [
+    { to: "/encarregado", label: "Preparação" },
+    { to: "/auditoria", label: "Auditoria" },
+  ],
   operador: [{ to: "/operador", label: "Operação" }],
 };
 
 export function AppShell({ children }: { children: ReactNode }) {
   const sessao = useStore((s) => s.sessao);
+  const desafios = useStore((s) => s.desafios);
   const logout = useStore((s) => s.logout);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -29,6 +37,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const user = sessao ? findUser(sessao.username) : undefined;
   if (!user) return null;
   const nav = NAV[user.perfil];
+
+  const meusDesafiosAbertos = desafios.filter((d) => d.status === "Aberto" && d.atribuidoA === user.perfil).length;
 
   function handleLogout() {
     logout();
@@ -44,24 +54,31 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Factory className="h-5 w-5" />
             </div>
             <div className="hidden md:block leading-tight">
-              <div className="text-sm font-bold tracking-tight">IME Corte CNC</div>
-              <div className="text-[10px] text-muted-foreground uppercase">Planejamento · Programação · Preparação</div>
+              <div className="text-sm font-bold tracking-tight">Gestão de Processos CNC</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Planej. · Prog. · Materiais · Prep. · Op.</div>
             </div>
           </Link>
           <nav className="flex-1 flex items-center gap-1 ml-4 overflow-x-auto">
             {nav.map((n) => {
               const active = pathname === n.to;
+              const showBadge = n.to === "/auditoria" && meusDesafiosAbertos > 0;
               return (
                 <Link
                   key={n.to}
                   to={n.to as "/planejador"}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                     active
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 >
                   {n.label}
+                  {showBadge && (
+                    <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-orange-500 text-black text-[10px] font-extrabold">
+                      <AlertCircle className="h-3 w-3" />
+                      {meusDesafiosAbertos}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -69,7 +86,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right hidden sm:block leading-tight">
               <div className="text-sm font-medium">{user.nome}</div>
-              <div className="text-[10px] uppercase text-primary">{user.perfil}</div>
+              <div className="text-[10px] uppercase text-primary">
+                {user.perfil === "encarregado" ? "Preparação" : user.perfil}
+                {user.tipo ? ` · ${user.tipo === "Tubulação" ? "Tubo" : user.tipo}` : ""}
+              </div>
             </div>
             <button
               onClick={handleLogout}
@@ -97,6 +117,8 @@ export function StatusBadge({ status }: { status: string }) {
     "Revisado": "bg-purple-500/10 text-purple-200 border border-purple-500/30",
     "Cancelado": "bg-destructive/20 text-destructive border border-destructive/40",
     "Aguardando": "bg-muted text-muted-foreground",
+    "Liberado": "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50",
+    "Movimentado": "bg-indigo-500/20 text-indigo-300 border border-indigo-500/50",
     "Alocado": "bg-blue-500/20 text-blue-300 border border-blue-500/40",
     "Em Corte": "bg-yellow-500/25 text-yellow-200 border border-yellow-500/50",
     "Corte Paralisado": "bg-orange-500/25 text-orange-200 border border-orange-500/60",

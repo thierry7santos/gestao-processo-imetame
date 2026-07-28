@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProgramadorRouteImport } from './routes/programador'
 import { Route as PlanejadorRouteImport } from './routes/planejador'
 import { Route as OperadorRouteImport } from './routes/operador'
+import { Route as MateriaisRouteImport } from './routes/materiais'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as EncarregadoRouteImport } from './routes/encarregado'
@@ -31,6 +32,11 @@ const PlanejadorRoute = PlanejadorRouteImport.update({
 const OperadorRoute = OperadorRouteImport.update({
   id: '/operador',
   path: '/operador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MateriaisRoute = MateriaisRouteImport.update({
+  id: '/materiais',
+  path: '/materiais',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
   '/login': typeof LoginRoute
+  '/materiais': typeof MateriaisRoute
   '/operador': typeof OperadorRoute
   '/planejador': typeof PlanejadorRoute
   '/programador': typeof ProgramadorRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
   '/login': typeof LoginRoute
+  '/materiais': typeof MateriaisRoute
   '/operador': typeof OperadorRoute
   '/planejador': typeof PlanejadorRoute
   '/programador': typeof ProgramadorRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
   '/login': typeof LoginRoute
+  '/materiais': typeof MateriaisRoute
   '/operador': typeof OperadorRoute
   '/planejador': typeof PlanejadorRoute
   '/programador': typeof ProgramadorRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/encarregado'
     | '/kpis'
     | '/login'
+    | '/materiais'
     | '/operador'
     | '/planejador'
     | '/programador'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/encarregado'
     | '/kpis'
     | '/login'
+    | '/materiais'
     | '/operador'
     | '/planejador'
     | '/programador'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/encarregado'
     | '/kpis'
     | '/login'
+    | '/materiais'
     | '/operador'
     | '/planejador'
     | '/programador'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   EncarregadoRoute: typeof EncarregadoRoute
   KpisRoute: typeof KpisRoute
   LoginRoute: typeof LoginRoute
+  MateriaisRoute: typeof MateriaisRoute
   OperadorRoute: typeof OperadorRoute
   PlanejadorRoute: typeof PlanejadorRoute
   ProgramadorRoute: typeof ProgramadorRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/operador'
       fullPath: '/operador'
       preLoaderRoute: typeof OperadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/materiais': {
+      id: '/materiais'
+      path: '/materiais'
+      fullPath: '/materiais'
+      preLoaderRoute: typeof MateriaisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   EncarregadoRoute: EncarregadoRoute,
   KpisRoute: KpisRoute,
   LoginRoute: LoginRoute,
+  MateriaisRoute: MateriaisRoute,
   OperadorRoute: OperadorRoute,
   PlanejadorRoute: PlanejadorRoute,
   ProgramadorRoute: ProgramadorRoute,

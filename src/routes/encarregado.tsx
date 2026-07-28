@@ -16,6 +16,7 @@ import type { Agrupamento, Maquina, Solicitacao, Turno } from "@/lib/types";
 import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar } from "@/services/dataService";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/encarregado")({
   component: () => (
@@ -51,7 +52,7 @@ function EncarregadoPage() {
     if (!maquinasArea.includes(maquina)) setMaquina(maquinasArea[0]);
   }, [maquinasArea, maquina]);
 
-  // Disponíveis (não alocados) filtrados por tipo do usuário
+  // Disponíveis: apenas agrupamentos que o Materiais já movimentou.
   const disponiveis = useMemo(() => {
     const validos = ["Concluído", "A Revisar", "Em Revisão", "Revisado"];
     const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null; passivo: boolean }[] = [];
@@ -59,7 +60,7 @@ function EncarregadoPage() {
       if (s.tipo !== tipoUsuario) continue;
       if (!validos.includes(s.status)) continue;
       for (const a of s.agrupamentos) {
-        if (a.statusCorte === "Aguardando") {
+        if (a.statusCorte === "Movimentado") {
           out.push({
             solic: s, agrup: a,
             alerta: s.status === "A Revisar" ? "orange" : ["Em Revisão", "Revisado"].includes(s.status) ? "purple" : null,
@@ -110,8 +111,8 @@ function EncarregadoPage() {
     <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Preparação · Encarregado <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
-          <p className="text-sm text-muted-foreground">Alocação semanal por máquina e turno · Área: {tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}.</p>
+          <h1 className="text-2xl font-bold">Preparação · <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
+          <p className="text-sm text-muted-foreground">Alocação semanal por máquina e turno · exibe apenas agrupamentos movimentados pelo Materiais.</p>
         </div>
         <div className="flex gap-2 items-end flex-wrap">
           <div>
@@ -208,6 +209,7 @@ function EncarregadoPage() {
                   <Checkbox checked={a.chapaRecebida} onCheckedChange={() => toggleChapa(item.solic.id, a.id)} />
                   <span>Chapa recebida pela preparação</span>
                 </label>
+                <div className="pt-0.5"><DesafioButton solic={item.solic} agrup={a} /></div>
                 <div className="grid grid-cols-6 gap-1 pt-1">
                   {dias.map((d) => (
                     <button

@@ -44,20 +44,19 @@ function LoginPage() {
             <Factory className="h-6 w-6" />
           </div>
           <div>
-            <div className="text-lg font-bold">IME Corte CNC</div>
+            <div className="text-lg font-bold">Gestão de Processos CNC</div>
             <div className="text-xs text-muted-foreground uppercase tracking-wider">
-              Imetame · MES
+              Imetame
             </div>
           </div>
         </div>
         <div className="space-y-4">
           <h1 className="text-4xl font-extrabold leading-tight">
-            Planejamento.<br />
-            <span className="text-primary">Programação.</span><br />
-            Preparação.
+            Planejamento. <span className="text-primary">Programação.</span><br />
+            Materiais. Preparação. <span className="text-primary">Operação.</span>
           </h1>
           <p className="text-muted-foreground max-w-md text-sm">
-            Sistema de gestão industrial para o fluxo de corte CNC — do pedido do planejador ao chão de fábrica.
+            Fluxo completo de gestão de processos de corte CNC — do pedido do planejador ao chão de fábrica.
           </p>
         </div>
         <div className="text-[11px] text-muted-foreground">
@@ -72,8 +71,8 @@ function LoginPage() {
               <Factory className="h-5 w-5" />
             </div>
             <div>
-              <div className="font-bold">IME Corte CNC</div>
-              <div className="text-[11px] text-muted-foreground uppercase">Imetame · MES</div>
+              <div className="font-bold">Gestão de Processos CNC</div>
+              <div className="text-[11px] text-muted-foreground uppercase">Imetame</div>
             </div>
           </div>
 
@@ -109,7 +108,7 @@ function LoginPage() {
                 >
                   <div className="font-mono font-semibold">{u.username}</div>
                   <div className="text-[10px] text-muted-foreground uppercase">
-                    {u.perfil}{u.tipo ? ` · ${u.tipo === "Tubulação" ? "Tubo" : u.tipo}` : ""}
+                    {u.perfil === "encarregado" ? "preparação" : u.perfil}{u.tipo ? ` · ${u.tipo === "Tubulação" ? "Tubo" : u.tipo}` : ""}
                   </div>
                 </button>
               ))}
