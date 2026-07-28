@@ -110,8 +110,8 @@ function EncarregadoPage() {
     <div className="p-4 sm:p-6 space-y-4 max-w-[1800px] mx-auto">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Preparação · Encarregado <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
-          <p className="text-sm text-muted-foreground">Alocação semanal por máquina e turno · Área: {tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}.</p>
+          <h1 className="text-2xl font-bold">Preparação · <span className="text-primary">{tipoUsuario === "Tubulação" ? "Tubo" : tipoUsuario}</span></h1>
+          <p className="text-sm text-muted-foreground">Alocação semanal por máquina e turno · exibe apenas agrupamentos movimentados pelo Materiais.</p>
         </div>
         <div className="flex gap-2 items-end flex-wrap">
           <div>

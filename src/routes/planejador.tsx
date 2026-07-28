@@ -23,8 +23,9 @@ import {
 } from "@/components/ui/select";
 import { fmtDate, fmtDateTime, fmtMin, todayISO } from "@/lib/formatters";
 import type { Solicitacao, StatusSolicitacao, TipoPlano } from "@/lib/types";
-import { AlertTriangle, FileText, Pencil, Plus, RotateCcw, History, Filter } from "lucide-react";
+import { AlertTriangle, FileText, Pencil, Plus, RotateCcw, History, Filter, Send } from "lucide-react";
 import { toast } from "sonner";
+import { liberarSolicitacao } from "@/services/dataService";
 
 export const Route = createFileRoute("/planejador")({
   component: () => (
@@ -177,6 +178,16 @@ function PlanejadorPage() {
                       <Button size="sm" variant="ghost" onClick={() => setOpenHistorico(s)}>
                         <History className="h-4 w-4" />
                       </Button>
+                      {s.status === "Concluído" && s.agrupamentos.some((a) => a.statusCorte === "Aguardando") && (
+                        <Button
+                          size="sm"
+                          className="bg-primary/20 text-primary hover:bg-primary/30 border border-primary/40 mr-1"
+                          onClick={() => { liberarSolicitacao(s.id, user.nome); toast.success("Liberado para Materiais"); }}
+                          title="Liberar chapas para o setor de Materiais"
+                        >
+                          <Send className="h-3 w-3 mr-1" /> Liberar Materiais
+                        </Button>
+                      )}
                       {["Em Fila", "Paralisado"].includes(s.status) && (
                         <Button size="sm" variant="ghost" onClick={() => setOpenEditar(s)}>
                           <Pencil className="h-4 w-4" />
