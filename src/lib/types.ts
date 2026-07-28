@@ -1,6 +1,7 @@
 export type Perfil =
   | "planejador"
   | "programador"
+  | "materiais"
   | "encarregado"
   | "operador";
 
@@ -11,11 +12,9 @@ export interface Usuario {
   senha: string;
   perfil: Perfil;
   nome: string;
-  /** Obrigatório para encarregado e operador — segmenta a área (Chapa/Perfil/Tubo). */
+  /** Obrigatório para preparação (encarregado) e operador — segmenta a área. */
   tipo?: TipoPlano;
 }
-
-
 
 export type StatusSolicitacao =
   | "Em Fila"
@@ -29,6 +28,8 @@ export type StatusSolicitacao =
 
 export type StatusCorte =
   | "Aguardando"
+  | "Liberado"
+  | "Movimentado"
   | "Alocado"
   | "Em Corte"
   | "Corte Paralisado"
@@ -62,7 +63,7 @@ export interface ParadaCorte {
 
 export interface Agrupamento {
   id: string;
-  nome: string; // 1250C01
+  nome: string;
   pdfNome?: string;
   pdfUrl?: string;
   rir?: string;
@@ -76,24 +77,28 @@ export interface Agrupamento {
   chapaRecebida: boolean;
   maquina?: Maquina;
   turno?: Turno;
-  diaAlocado?: string; // ISO date yyyy-mm-dd
+  diaAlocado?: string;
   statusCorte: StatusCorte;
   validacao?: Validacao;
   inicioCorte?: string;
   fimCorte?: string;
   operador?: string;
   obsOperacao?: string;
-  /** Marca planos alocados em semanas passadas que não foram cortados. */
   isPassivoAnterior?: boolean;
   paradas?: ParadaCorte[];
+  /** Timestamps do fluxo Materiais. */
+  liberadoEm?: string;
+  liberadoPor?: string;
+  movimentadoEm?: string;
+  movimentadoPor?: string;
 }
 
 export interface Solicitacao {
-  id: string; // #0001
+  id: string;
   os: string;
   titulo: string;
   tipo: TipoPlano;
-  dataNecessidade: string; // yyyy-mm-dd
+  dataNecessidade: string;
   descricao: string;
   descricaoRevisao?: string;
   rirsPerfis?: string;
@@ -103,7 +108,7 @@ export interface Solicitacao {
   status: StatusSolicitacao;
   planejadorCriador: string;
   createdAt: string;
-  numeroPlano?: string; // 1250C
+  numeroPlano?: string;
   programador?: string;
   inicioProg?: string;
   fimProg?: string;
@@ -114,12 +119,33 @@ export interface Solicitacao {
   historico: LogEntry[];
 }
 
+export type StatusDesafio = "Aberto" | "Resolvido";
+
+export interface Desafio {
+  id: string;
+  solicId: string;
+  agrupId?: string;
+  agrupNome?: string;
+  descricao: string;
+  atribuidoA: Perfil;      // Para quem reporta / precisa atuar
+  responsavel: Perfil;     // De quem foi a culpa
+  resolucao?: string;      // Sugestão de resolução (opcional)
+  status: StatusDesafio;
+  criadoPor: string;
+  criadoPorPerfil: Perfil;
+  criadoEm: string;
+  resolvidoPor?: string;
+  resolvidoEm?: string;
+}
+
 export interface AppState {
   sessao: { username: string } | null;
   solicitacoes: Solicitacao[];
+  desafios: Desafio[];
   nextSolicId: number;
   nextPlanoNum: number;
   nextPlanoNumP: number;
   nextPlanoNumT: number;
+  nextDesafioId: number;
   seeded: boolean;
 }
