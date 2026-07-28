@@ -19,7 +19,7 @@ import { ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/auditoria")({
   component: () => (
-    <RequireAuth perfis={["planejador", "programador"]}>
+    <RequireAuth perfis={["planejador", "programador", "materiais", "encarregado"]}>
       <AuditoriaPage />
     </RequireAuth>
   ),

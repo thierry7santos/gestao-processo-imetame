@@ -51,7 +51,7 @@ function EncarregadoPage() {
     if (!maquinasArea.includes(maquina)) setMaquina(maquinasArea[0]);
   }, [maquinasArea, maquina]);
 
-  // Disponíveis (não alocados) filtrados por tipo do usuário
+  // Disponíveis: apenas agrupamentos que o Materiais já movimentou.
   const disponiveis = useMemo(() => {
     const validos = ["Concluído", "A Revisar", "Em Revisão", "Revisado"];
     const out: { solic: Solicitacao; agrup: Agrupamento; alerta: "orange" | "purple" | null; passivo: boolean }[] = [];
@@ -59,7 +59,7 @@ function EncarregadoPage() {
       if (s.tipo !== tipoUsuario) continue;
       if (!validos.includes(s.status)) continue;
       for (const a of s.agrupamentos) {
-        if (a.statusCorte === "Aguardando") {
+        if (a.statusCorte === "Movimentado") {
           out.push({
             solic: s, agrup: a,
             alerta: s.status === "A Revisar" ? "orange" : ["Em Revisão", "Revisado"].includes(s.status) ? "purple" : null,

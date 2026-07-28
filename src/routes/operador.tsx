@@ -47,7 +47,9 @@ const ORDER_STATUS: Record<StatusCorte, number> = {
   "Em Corte": 1,
   "Corte Paralisado": 2,
   "Cortado": 3,
-  "Aguardando": 4,
+  "Movimentado": 4,
+  "Liberado": 5,
+  "Aguardando": 6,
 };
 
 function OperadorPage() {
