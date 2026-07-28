@@ -28,6 +28,10 @@ export const Route = createFileRoute("/auditoria")({
 
 function AuditoriaPage() {
   const solicitacoes = useStore((s) => s.solicitacoes);
+  const desafios = useStore((s) => s.desafios);
+  const resolver = useStore((s) => s.resolverDesafio);
+  const sessao = useStore((s) => s.sessao)!;
+  const user = findUser(sessao.username)!;
   const [fId, setFId] = useState("");
   const [fPlano, setFPlano] = useState("");
   const [fOs, setFOs] = useState("");
@@ -35,6 +39,10 @@ function AuditoriaPage() {
   const [fFim, setFFim] = useState("");
   const [fMaquina, setFMaquina] = useState<string>("todas");
   const [fStatus, setFStatus] = useState<string>("todos");
+  const [resolucaoTxt, setResolucaoTxt] = useState<Record<string, string>>({});
+
+  const meusDesafios = desafios.filter((d) => d.status === "Aberto" && d.atribuidoA === user.perfil);
+  const outrosDesafios = desafios.filter((d) => !(d.status === "Aberto" && d.atribuidoA === user.perfil));
 
   const linhas = useMemo(() => {
     const out: {
@@ -71,6 +79,70 @@ function AuditoriaPage() {
         <h1 className="text-2xl font-bold">Auditoria de Produção</h1>
         <p className="text-sm text-muted-foreground">Comparativo real vs digitado — desvios &gt; ±50 mm em vermelho.</p>
       </header>
+
+      <Card className="p-3 border-orange-500/40">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-sm font-bold text-orange-300">
+            <AlertCircle className="h-4 w-4" /> Desafios atribuídos a mim ({perfilLabel(user.perfil)})
+          </div>
+          <div className="text-xs text-muted-foreground">{meusDesafios.length} aberto(s) · {outrosDesafios.length} outro(s)</div>
+        </div>
+        {meusDesafios.length === 0 && (
+          <div className="text-xs text-muted-foreground py-2">Nenhum desafio aberto para você.</div>
+        )}
+        <div className="space-y-2">
+          {meusDesafios.map((d) => (
+            <div key={d.id} className="p-3 rounded border border-orange-500/40 bg-orange-500/5 space-y-2">
+              <div className="flex flex-wrap justify-between gap-2 text-xs">
+                <div>
+                  <span className="font-mono font-bold text-orange-200">{d.id}</span> ·
+                  <span className="font-mono ml-1">{d.solicId}</span>
+                  {d.agrupNome && <> · agrup. <span className="font-mono">{d.agrupNome}</span></>}
+                </div>
+                <div className="text-muted-foreground">
+                  Aberto por <b>{d.criadoPor}</b> ({perfilLabel(d.criadoPorPerfil)}) · {fmtDateTime(d.criadoEm)}
+                </div>
+              </div>
+              <div className="text-sm">{d.descricao}</div>
+              <div className="text-xs text-muted-foreground">
+                Responsável (culpa): <b className="text-foreground">{perfilLabel(d.responsavel)}</b>
+                {d.resolucao && <> · Sugestão: <span className="text-foreground">{d.resolucao}</span></>}
+              </div>
+              <div className="flex gap-2">
+                <Textarea
+                  rows={1}
+                  placeholder="Descreva a resolução aplicada (opcional)"
+                  value={resolucaoTxt[d.id] ?? ""}
+                  onChange={(e) => setResolucaoTxt({ ...resolucaoTxt, [d.id]: e.target.value })}
+                />
+                <Button
+                  className="bg-primary text-primary-foreground"
+                  onClick={() => { resolver(d.id, resolucaoTxt[d.id] ?? "", user.nome); toast.success(`Desafio ${d.id} resolvido`); }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Resolver
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        {outrosDesafios.length > 0 && (
+          <details className="mt-3 text-xs">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Ver outros desafios ({outrosDesafios.length})</summary>
+            <div className="mt-2 space-y-1">
+              {outrosDesafios.map((d) => (
+                <div key={d.id} className="flex justify-between gap-2 p-2 rounded bg-secondary/50">
+                  <div>
+                    <span className="font-mono font-bold">{d.id}</span> · {d.solicId}{d.agrupNome ? ` · ${d.agrupNome}` : ""} — {d.descricao}
+                  </div>
+                  <div className="whitespace-nowrap text-muted-foreground">
+                    → {perfilLabel(d.atribuidoA)} · {d.status === "Aberto" ? <span className="text-orange-300 font-bold">Aberto</span> : <span className="text-primary font-bold">Resolvido</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+      </Card>
 
       <Card className="p-3">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
