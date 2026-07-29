@@ -31,6 +31,7 @@ import {
   retomarCorte as svcRetomarCorte,
   MOTIVOS_PARADA,
 } from "@/services/dataService";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/operador")({
   component: () => (
