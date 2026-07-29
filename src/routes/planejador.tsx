@@ -179,6 +179,7 @@ function PlanejadorPage() {
                       <Button size="sm" variant="ghost" onClick={() => setOpenHistorico(s)}>
                         <History className="h-4 w-4" />
                       </Button>
+                      <span className="inline-block mr-1"><DesafioButton solic={s} /></span>
                       {s.status === "Concluído" && s.agrupamentos.some((a) => a.statusCorte === "Aguardando") && (
                         <Button
                           size="sm"
