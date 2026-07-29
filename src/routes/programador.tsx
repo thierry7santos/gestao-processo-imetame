@@ -187,6 +187,7 @@ function ProgramadorPage() {
                       <Button size="sm" variant="outline" onClick={() => setOpen(s)}>
                         <Settings2 className="h-3 w-3 mr-1" /> Detalhes
                       </Button>
+                      <span className="inline-block ml-1"><DesafioButton solic={s} /></span>
                     </TableCell>
                   </TableRow>
                 );
