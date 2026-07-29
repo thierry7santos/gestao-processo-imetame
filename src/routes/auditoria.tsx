@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { fmtDate, fmtDateTime, fmtMin, minutesBetween } from "@/lib/formatters";
-import type { Maquina, StatusSolicitacao } from "@/lib/types";
+import type { Maquina, Solicitacao, StatusSolicitacao } from "@/lib/types";
 import { findUser, perfilLabel } from "@/lib/auth";
-import { ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, Ruler, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/auditoria")({
   component: () => (
@@ -26,58 +28,48 @@ export const Route = createFileRoute("/auditoria")({
   ),
 });
 
+const TODAS_MAQUINAS: Maquina[] = ["CNC-3", "Messer", "Robô-01", "Robô-02", "Bodor-D"];
+
 function AuditoriaPage() {
   const solicitacoes = useStore((s) => s.solicitacoes);
   const desafios = useStore((s) => s.desafios);
   const resolver = useStore((s) => s.resolverDesafio);
   const sessao = useStore((s) => s.sessao)!;
   const user = findUser(sessao.username)!;
+
   const [fId, setFId] = useState("");
   const [fPlano, setFPlano] = useState("");
   const [fOs, setFOs] = useState("");
-  const [fInicio, setFInicio] = useState("");
-  const [fFim, setFFim] = useState("");
+  const [fSolicitante, setFSolicitante] = useState("");
+  const [fTipo, setFTipo] = useState<string>("todos");
   const [fMaquina, setFMaquina] = useState<string>("todas");
   const [fStatus, setFStatus] = useState<string>("todos");
+  const [detalhe, setDetalhe] = useState<Solicitacao | null>(null);
   const [resolucaoTxt, setResolucaoTxt] = useState<Record<string, string>>({});
 
   const meusDesafios = desafios.filter((d) => d.status === "Aberto" && d.atribuidoA === user.perfil);
   const outrosDesafios = desafios.filter((d) => !(d.status === "Aberto" && d.atribuidoA === user.perfil));
 
   const linhas = useMemo(() => {
-    const out: {
-      solicId: string; os: string; plano?: string; agrupNome: string;
-      maquina?: Maquina; real: { comp?: number; larg?: number };
-      dig: { comp?: number; larg?: number };
-      status: string; operador?: string; inicio?: string; fim?: string;
-      solic: (typeof solicitacoes)[number]; agrupId: string;
-    }[] = [];
-    for (const s of solicitacoes) {
-      if (fId && !s.id.includes(fId)) continue;
-      if (fOs && !s.os.includes(fOs)) continue;
-      if (fPlano && !(s.numeroPlano ?? "").includes(fPlano)) continue;
-      if (fStatus !== "todos" && s.status !== fStatus) continue;
-      for (const a of s.agrupamentos) {
-        if (fMaquina !== "todas" && a.maquina !== fMaquina) continue;
-        if (fInicio && (!a.inicioCorte || a.inicioCorte < fInicio)) continue;
-        if (fFim && (!a.inicioCorte || a.inicioCorte > fFim + "T23:59")) continue;
-        out.push({
-          solicId: s.id, os: s.os, plano: s.numeroPlano, agrupNome: a.nome,
-          maquina: a.maquina, real: { comp: a.comprimento, larg: a.largura },
-          dig: { comp: a.validacao?.compDigitado, larg: a.validacao?.largDigitado },
-          status: a.statusCorte, operador: a.operador,
-          inicio: a.inicioCorte, fim: a.fimCorte, solic: s, agrupId: a.id,
-        });
-      }
-    }
-    return out;
-  }, [solicitacoes, fId, fOs, fPlano, fInicio, fFim, fMaquina, fStatus]);
+    return solicitacoes
+      .filter((s) => {
+        if (fId && !s.id.toLowerCase().includes(fId.toLowerCase())) return false;
+        if (fPlano && !(s.numeroPlano ?? "").toLowerCase().includes(fPlano.toLowerCase())) return false;
+        if (fOs && !s.os.toLowerCase().includes(fOs.toLowerCase())) return false;
+        if (fSolicitante && !s.planejadorCriador.toLowerCase().includes(fSolicitante.toLowerCase())) return false;
+        if (fTipo !== "todos" && s.tipo !== fTipo) return false;
+        if (fStatus !== "todos" && s.status !== fStatus) return false;
+        if (fMaquina !== "todas" && !s.agrupamentos.some((a) => a.maquina === fMaquina)) return false;
+        return true;
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [solicitacoes, fId, fPlano, fOs, fSolicitante, fTipo, fMaquina, fStatus]);
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
       <header>
         <h1 className="text-2xl font-bold">Auditoria de Produção</h1>
-        <p className="text-sm text-muted-foreground">Comparativo real vs digitado — desvios &gt; ±50 mm em vermelho.</p>
+        <p className="text-sm text-muted-foreground">Histórico geral das solicitações — da criação ao corte de todos os agrupamentos.</p>
       </header>
 
       <Card className="p-3 border-orange-500/40">
@@ -149,16 +141,26 @@ function AuditoriaPage() {
           <FiltroInput label="ID" value={fId} setValue={setFId} />
           <FiltroInput label="Plano" value={fPlano} setValue={setFPlano} />
           <FiltroInput label="OS" value={fOs} setValue={setFOs} />
-          <FiltroInput label="De" type="date" value={fInicio} setValue={setFInicio} />
-          <FiltroInput label="Até" type="date" value={fFim} setValue={setFFim} />
+          <FiltroInput label="Solicitante" value={fSolicitante} setValue={setFSolicitante} />
+          <div>
+            <Label className="text-xs">Tipo</Label>
+            <Select value={fTipo} onValueChange={setFTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="Chapa">Chapa</SelectItem>
+                <SelectItem value="Perfil">Perfil</SelectItem>
+                <SelectItem value="Tubulação">Tubulação</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label className="text-xs">Máquina</Label>
             <Select value={fMaquina} onValueChange={setFMaquina}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
-                <SelectItem value="CNC-3">CNC-3</SelectItem>
-                <SelectItem value="Messer">Messer</SelectItem>
+                {TODAS_MAQUINAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -181,106 +183,178 @@ function AuditoriaPage() {
           <table className="w-full text-xs">
             <thead className="bg-secondary text-secondary-foreground">
               <tr>
-                <th className="px-2 py-2 text-left">Solic.</th>
+                <th className="px-2 py-2 text-left">ID</th>
+                <th className="px-2 py-2 text-left">Solicitante</th>
                 <th className="px-2 py-2 text-left">OS</th>
+                <th className="px-2 py-2 text-left">Título</th>
+                <th className="px-2 py-2 text-left">Tipo</th>
                 <th className="px-2 py-2 text-left">Plano</th>
-                <th className="px-2 py-2 text-left">Agrup.</th>
-                <th className="px-2 py-2 text-left">Máquina</th>
-                <th className="px-2 py-2 text-right">Comp. Real</th>
-                <th className="px-2 py-2 text-right">Comp. Digitado</th>
-                <th className="px-2 py-2 text-right">Larg. Real</th>
-                <th className="px-2 py-2 text-right">Larg. Digitado</th>
-                <th className="px-2 py-2 text-left">Operador</th>
+                <th className="px-2 py-2 text-left">Necessidade</th>
                 <th className="px-2 py-2 text-left">Status</th>
+                <th className="px-2 py-2 text-left">Progresso corte</th>
+                <th className="px-2 py-2 text-left">Máquinas</th>
+                <th className="px-2 py-2 text-left">Divergência</th>
                 <th className="px-2 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {linhas.map((r) => {
-                const desvC = r.dig.comp != null && r.real.comp != null ? Math.abs(r.dig.comp - r.real.comp) : 0;
-                const desvL = r.dig.larg != null && r.real.larg != null ? Math.abs(r.dig.larg - r.real.larg) : 0;
+              {linhas.map((s) => {
+                const total = s.agrupamentos.length;
+                const cortados = s.agrupamentos.filter((a) => a.statusCorte === "Cortado").length;
+                const maquinas = Array.from(new Set(s.agrupamentos.map((a) => a.maquina).filter(Boolean))) as string[];
+                const temDivergencia = s.agrupamentos.some((a) => {
+                  const dc = a.validacao?.compDigitado != null && a.comprimento != null ? Math.abs(a.validacao.compDigitado - a.comprimento) : 0;
+                  const dl = a.validacao?.largDigitado != null && a.largura != null ? Math.abs(a.validacao.largDigitado - a.largura) : 0;
+                  return dc > 50 || dl > 50;
+                });
                 return (
-                  <AudLinha key={`${r.solicId}-${r.agrupId}`} r={r} desvC={desvC} desvL={desvL} />
+                  <tr
+                    key={s.id}
+                    className={`border-t border-border ${temDivergencia ? "bg-yellow-500/10 border-l-4 border-l-yellow-500" : ""}`}
+                  >
+                    <td className="px-2 py-1.5 font-mono font-semibold">{s.id}</td>
+                    <td className="px-2 py-1.5 whitespace-nowrap">{s.planejadorCriador}</td>
+                    <td className="px-2 py-1.5 font-mono">{s.os}</td>
+                    <td className="px-2 py-1.5 max-w-[220px] truncate">{s.titulo}</td>
+                    <td className="px-2 py-1.5">{s.tipo}</td>
+                    <td className="px-2 py-1.5 font-mono">{s.numeroPlano ?? "—"}</td>
+                    <td className="px-2 py-1.5">{fmtDate(s.dataNecessidade)}</td>
+                    <td className="px-2 py-1.5"><StatusBadge status={s.status} /></td>
+                    <td className="px-2 py-1.5 font-mono">
+                      {total === 0 ? "—" : `${cortados}/${total}`}
+                    </td>
+                    <td className="px-2 py-1.5 text-muted-foreground">{maquinas.join(", ") || "—"}</td>
+                    <td className="px-2 py-1.5">
+                      {temDivergencia ? (
+                        <span className="inline-flex items-center gap-1 text-yellow-300 font-semibold">
+                          <AlertTriangle className="h-3.5 w-3.5" /> Ver medidas
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 text-right">
+                      <Button size="sm" variant="outline" onClick={() => setDetalhe(s)}>
+                        <FileText className="h-3.5 w-3.5 mr-1" /> Detalhes
+                      </Button>
+                    </td>
+                  </tr>
                 );
               })}
               {linhas.length === 0 && (
-                <tr><td colSpan={12} className="text-center py-8 text-muted-foreground">Nenhum registro.</td></tr>
+                <tr><td colSpan={12} className="text-center py-8 text-muted-foreground">Nenhuma solicitação encontrada.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
+
+      <DetalheDialog solic={detalhe} onClose={() => setDetalhe(null)} />
     </div>
   );
 }
 
-function AudLinha({ r, desvC, desvL }: { r: any; desvC: number; desvL: number }) {
-  const [open, setOpen] = useState(false);
+function DetalheDialog({ solic, onClose }: { solic: Solicitacao | null; onClose: () => void }) {
+  const solicitacoes = useStore((s) => s.solicitacoes);
+  const atual = solic ? solicitacoes.find((x) => x.id === solic.id) : null;
+  if (!atual) return null;
+
   return (
-    <>
-      <tr className="border-t border-border">
-        <td className="px-2 py-1 font-mono">{r.solicId}</td>
-        <td className="px-2 py-1 font-mono">{r.os}</td>
-        <td className="px-2 py-1 font-mono">{r.plano ?? "—"}</td>
-        <td className="px-2 py-1 font-mono font-bold">{r.agrupNome}</td>
-        <td className="px-2 py-1">{r.maquina ?? "—"}</td>
-        <td className="px-2 py-1 text-right font-mono">{r.real.comp ?? "—"}</td>
-        <td className={`px-2 py-1 text-right font-mono ${desvC > 50 ? "pulse-red text-white font-bold" : ""}`}>{r.dig.comp ?? "—"}</td>
-        <td className="px-2 py-1 text-right font-mono">{r.real.larg ?? "—"}</td>
-        <td className={`px-2 py-1 text-right font-mono ${desvL > 50 ? "pulse-red text-white font-bold" : ""}`}>{r.dig.larg ?? "—"}</td>
-        <td className="px-2 py-1">{r.operador ?? "—"}</td>
-        <td className="px-2 py-1"><StatusBadge status={r.status} /></td>
-        <td className="px-2 py-1">
-          <Button size="sm" variant="ghost" onClick={() => setOpen(!open)}>
-            <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
-          </Button>
-        </td>
-      </tr>
-      {open && (
-        <tr className="bg-background/40">
-          <td colSpan={12} className="px-4 py-3">
-            <div className="text-xs uppercase text-muted-foreground font-semibold mb-2">Linha do tempo · {r.solicId} · {r.agrupNome}</div>
-            <ol className="space-y-1.5">
-              {r.solic.historico.map((h: any, i: number) => (
-                <li key={i} className="flex gap-3 text-xs">
-                  <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(h.dataHora)}</span>
-                  <span className="font-semibold w-40 shrink-0">{h.usuario}</span>
-                  <span>{h.mudanca}</span>
-                </li>
-              ))}
-              {r.inicio && (
-                <li className="flex gap-3 text-xs">
-                  <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(r.inicio)}</span>
-                  <span className="font-semibold w-40 shrink-0">{r.operador}</span>
-                  <span>Início do corte</span>
-                </li>
-              )}
-              {(r.solic.agrupamentos.find((a: any) => a.id === r.agrupId)?.paradas ?? []).map((p: any, i: number) => (
-                <li key={`p-${i}`} className="flex gap-3 text-xs bg-orange-500/10 border border-orange-500/30 rounded px-2 py-1">
-                  <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(p.inicio)}</span>
-                  <span className="font-semibold w-40 shrink-0 text-orange-300">{p.operador}</span>
-                  <span>
-                    <b className="text-orange-300">Paralisou corte</b> — motivo: <b>{p.motivo}</b>
-                    {p.fim && <> · retomado {fmtDateTime(p.fim)} ({fmtMin(minutesBetween(p.inicio, p.fim))} parado)</>}
-                    {!p.fim && <> · <span className="text-orange-300 font-bold">ainda parado</span></>}
-                  </span>
-                </li>
-              ))}
-              {r.fim && (
-                <li className="flex gap-3 text-xs">
-                  <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(r.fim)}</span>
-                  <span className="font-semibold w-40 shrink-0">{r.operador}</span>
-                  <span>Corte finalizado ({fmtMin(minutesBetween(r.inicio, r.fim))})</span>
-                </li>
-              )}
-            </ol>
-            {r.solic.observacoesProgramador && (
-              <div className="mt-2 text-xs"><b>Obs. programador:</b> {r.solic.observacoesProgramador}</div>
-            )}
-          </td>
-        </tr>
-      )}
-    </>
+    <Dialog open={!!solic} onOpenChange={(b) => !b && onClose()}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono">{atual.id}</span> · {atual.titulo}
+            <StatusBadge status={atual.status} />
+            <span className="text-xs text-muted-foreground font-normal ml-2">
+              OS <b className="font-mono">{atual.os}</b> · Solicitante <b>{atual.planejadorCriador}</b>
+            </span>
+          </DialogTitle>
+        </DialogHeader>
+
+        <section className="space-y-2">
+          <div className="text-xs uppercase font-semibold text-muted-foreground">Validação de medidas (Real × Digitado)</div>
+          <div className="overflow-x-auto rounded border border-border">
+            <table className="w-full text-xs">
+              <thead className="bg-secondary">
+                <tr>
+                  <th className="px-2 py-1.5 text-left">Agrup.</th>
+                  <th className="px-2 py-1.5 text-left">Máquina</th>
+                  <th className="px-2 py-1.5 text-right">Comp. Real</th>
+                  <th className="px-2 py-1.5 text-right">Comp. Dig.</th>
+                  <th className="px-2 py-1.5 text-right">Larg. Real</th>
+                  <th className="px-2 py-1.5 text-right">Larg. Dig.</th>
+                  <th className="px-2 py-1.5 text-left">Operador</th>
+                  <th className="px-2 py-1.5 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {atual.agrupamentos.map((a) => {
+                  const dc = a.validacao?.compDigitado != null && a.comprimento != null ? Math.abs(a.validacao.compDigitado - a.comprimento) : 0;
+                  const dl = a.validacao?.largDigitado != null && a.largura != null ? Math.abs(a.validacao.largDigitado - a.largura) : 0;
+                  return (
+                    <tr key={a.id} className="border-t border-border">
+                      <td className="px-2 py-1 font-mono font-semibold">{a.nome}</td>
+                      <td className="px-2 py-1">{a.maquina ?? "—"}</td>
+                      <td className="px-2 py-1 text-right font-mono">{a.comprimento ?? "—"}</td>
+                      <td className={`px-2 py-1 text-right font-mono ${dc > 50 ? "pulse-red text-white font-bold" : ""}`}>{a.validacao?.compDigitado ?? "—"}</td>
+                      <td className="px-2 py-1 text-right font-mono">{a.largura ?? "—"}</td>
+                      <td className={`px-2 py-1 text-right font-mono ${dl > 50 ? "pulse-red text-white font-bold" : ""}`}>{a.validacao?.largDigitado ?? "—"}</td>
+                      <td className="px-2 py-1">{a.operador ?? "—"}</td>
+                      <td className="px-2 py-1"><StatusBadge status={a.statusCorte} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+            <Ruler className="h-3 w-3" /> Desvios &gt; ±50 mm são destacados em vermelho.
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="text-xs uppercase font-semibold text-muted-foreground">Linha do tempo da solicitação</div>
+          <ol className="space-y-1.5">
+            {atual.historico.map((h, i) => (
+              <li key={i} className="flex gap-3 text-xs">
+                <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(h.dataHora)}</span>
+                <span className="font-semibold w-40 shrink-0">{h.usuario}</span>
+                <span>{h.mudanca}</span>
+              </li>
+            ))}
+            {atual.agrupamentos.flatMap((a) => [
+              ...(a.inicioCorte ? [{
+                t: a.inicioCorte, who: a.operador ?? "—", msg: `Início do corte · agrup. ${a.nome}`, kind: "info" as const,
+              }] : []),
+              ...(a.paradas ?? []).map((p) => ({
+                t: p.inicio, who: p.operador,
+                msg: `Paralisou corte · agrup. ${a.nome} — motivo: ${p.motivo}${p.fim ? ` · retomado ${fmtDateTime(p.fim)} (${fmtMin(minutesBetween(p.inicio, p.fim))} parado)` : " · ainda parado"}`,
+                kind: "warn" as const,
+              })),
+              ...(a.fimCorte ? [{
+                t: a.fimCorte, who: a.operador ?? "—",
+                msg: `Corte finalizado · agrup. ${a.nome}${a.inicioCorte ? ` (${fmtMin(minutesBetween(a.inicioCorte, a.fimCorte))})` : ""}`,
+                kind: "ok" as const,
+              }] : []),
+            ]).sort((x, y) => x.t.localeCompare(y.t)).map((e, i) => (
+              <li key={`e-${i}`} className={`flex gap-3 text-xs px-2 py-1 rounded ${
+                e.kind === "warn" ? "bg-orange-500/10 border border-orange-500/30"
+                : e.kind === "ok" ? "bg-primary/5 border border-primary/30"
+                : ""
+              }`}>
+                <span className="text-muted-foreground font-mono w-40 shrink-0">{fmtDateTime(e.t)}</span>
+                <span className="font-semibold w-40 shrink-0">{e.who}</span>
+                <span>{e.msg}</span>
+              </li>
+            ))}
+          </ol>
+          {atual.observacoesProgramador && (
+            <div className="mt-2 text-xs"><b>Obs. programador:</b> {atual.observacoesProgramador}</div>
+          )}
+        </section>
+      </DialogContent>
+    </Dialog>
   );
 }
 

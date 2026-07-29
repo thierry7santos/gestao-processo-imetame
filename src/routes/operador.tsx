@@ -31,6 +31,7 @@ import {
   retomarCorte as svcRetomarCorte,
   MOTIVOS_PARADA,
 } from "@/services/dataService";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/operador")({
   component: () => (
@@ -147,6 +148,7 @@ function OperadorPage() {
                 <Button variant="outline" className="flex-1" onClick={() => agrup.pdfUrl ? window.open(agrup.pdfUrl) : toast.info(`PDF: ${agrup.pdfNome ?? agrup.nome + '.pdf'}`)}>
                   <FileText className="h-4 w-4 mr-1" />Abrir PDF
                 </Button>
+                <DesafioButton solic={solic} agrup={agrup} />
               </div>
 
               {paused && ultParada && (

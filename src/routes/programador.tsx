@@ -22,6 +22,7 @@ import type { Solicitacao, StatusSolicitacao } from "@/lib/types";
 import { AlertTriangle, FileUp, Play, PauseCircle, CheckCircle2, XCircle, FileText, Save, Settings2, Filter } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/programador")({
   component: () => (
@@ -186,6 +187,7 @@ function ProgramadorPage() {
                       <Button size="sm" variant="outline" onClick={() => setOpen(s)}>
                         <Settings2 className="h-3 w-3 mr-1" /> Detalhes
                       </Button>
+                      <span className="inline-block ml-1"><DesafioButton solic={s} /></span>
                     </TableCell>
                   </TableRow>
                 );
