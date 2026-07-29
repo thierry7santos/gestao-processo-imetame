@@ -26,6 +26,7 @@ import type { Solicitacao, StatusSolicitacao, TipoPlano } from "@/lib/types";
 import { AlertTriangle, FileText, Pencil, Plus, RotateCcw, History, Filter, Send } from "lucide-react";
 import { toast } from "sonner";
 import { liberarSolicitacao } from "@/services/dataService";
+import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/planejador")({
   component: () => (
