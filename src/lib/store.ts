@@ -481,8 +481,8 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
-      version: 3,
-      // v3: reset completo — novo fluxo com Materiais, novos logins e novos statuses.
+      version: 4,
+      // v4: reset — números de liberação (Lxxxxxx) na tela de Materiais.
       migrate: () => {
         return {
           sessao: null,
@@ -493,6 +493,7 @@ export const useStore = create<AppState & Actions>()(
           nextPlanoNumP: 150,
           nextPlanoNumT: 320,
           nextDesafioId: 1,
+          nextLiberacaoNum: 100234,
           seeded: false,
         } as unknown as AppState & Actions;
       },
@@ -506,6 +507,7 @@ export const useStore = create<AppState & Actions>()(
           state.nextPlanoNumP = seed.nextPlanoNumP;
           state.nextPlanoNumT = seed.nextPlanoNumT;
           state.nextDesafioId = seed.nextDesafioId ?? 1;
+          state.nextLiberacaoNum = seed.nextLiberacaoNum ?? 100234;
           state.seeded = true;
         }
       },
