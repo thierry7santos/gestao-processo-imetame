@@ -109,6 +109,10 @@ export interface Solicitacao {
   planejadorCriador: string;
   createdAt: string;
   numeroPlano?: string;
+  /** Número de liberação (ERP) gerado ao liberar para Materiais — padrão Lxxxxxx. */
+  numeroLiberacao?: string;
+  liberacaoEm?: string;
+  liberacaoPor?: string;
   programador?: string;
   inicioProg?: string;
   fimProg?: string;
@@ -147,5 +151,6 @@ export interface AppState {
   nextPlanoNumP: number;
   nextPlanoNumT: number;
   nextDesafioId: number;
+  nextLiberacaoNum: number;
   seeded: boolean;
 }

@@ -28,6 +28,7 @@ export function seedData(): {
   nextPlanoNumP: number;
   nextPlanoNumT: number;
   nextDesafioId: number;
+  nextLiberacaoNum: number;
 } {
   const hoje = todayISO();
   const ts = nowISO();
@@ -47,6 +48,9 @@ export function seedData(): {
     planejadorCriador: "Carlos Planejador",
     createdAt: ts,
     numeroPlano: "1250C",
+    numeroLiberacao: "L100234",
+    liberacaoEm: ts,
+    liberacaoPor: "Carlos Planejador",
     programador: "Marcos Programador",
     inicioProg: ts,
     fimProg: ts,
@@ -109,6 +113,9 @@ export function seedData(): {
     planejadorCriador: "Carlos Planejador",
     createdAt: ts,
     numeroPlano: "1251C",
+    numeroLiberacao: "L100235",
+    liberacaoEm: ts,
+    liberacaoPor: "Carlos Planejador",
     programador: "Marcos Programador",
     inicioProg: ts,
     fimProg: ts,
@@ -139,6 +146,9 @@ export function seedData(): {
     planejadorCriador: "Carlos Planejador",
     createdAt: ts,
     numeroPlano: "150P",
+    numeroLiberacao: "L100236",
+    liberacaoEm: ts,
+    liberacaoPor: "Carlos Planejador",
     programador: "Marcos Programador",
     inicioProg: ts,
     fimProg: ts,
@@ -173,6 +183,9 @@ export function seedData(): {
     planejadorCriador: "Carlos Planejador",
     createdAt: ts,
     numeroPlano: "320T",
+    numeroLiberacao: "L100237",
+    liberacaoEm: ts,
+    liberacaoPor: "Carlos Planejador",
     programador: "Marcos Programador",
     inicioProg: ts,
     fimProg: ts,
@@ -241,5 +254,6 @@ export function seedData(): {
     nextPlanoNumP: 151,
     nextPlanoNumT: 321,
     nextDesafioId: 2,
+    nextLiberacaoNum: 100238,
   };
 }

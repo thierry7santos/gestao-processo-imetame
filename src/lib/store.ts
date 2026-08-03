@@ -57,6 +57,7 @@ export const useStore = create<AppState & Actions>()(
       nextPlanoNumP: 150,
       nextPlanoNumT: 320,
       nextDesafioId: 1,
+      nextLiberacaoNum: 100234,
       seeded: false,
 
       login: (username) => set({ sessao: { username } }),
@@ -241,6 +242,10 @@ export const useStore = create<AppState & Actions>()(
 
       liberarSolicitacao: (solicId, usuario) => {
         const ts = nowISO();
+        const alvo = get().solicitacoes.find((s) => s.id === solicId);
+        const precisaNumero = !!alvo && !alvo.numeroLiberacao;
+        const numeroLiberacao = precisaNumero ? `L${String(get().nextLiberacaoNum).padStart(6, "0")}` : alvo?.numeroLiberacao;
+        let gerou = false;
         set({
           solicitacoes: get().solicitacoes.map((s) => {
             if (s.id !== solicId) return s;
@@ -253,10 +258,23 @@ export const useStore = create<AppState & Actions>()(
               return a;
             });
             if (n === 0) return s;
-            return { ...s, agrupamentos, historico: [...s.historico, log(usuario, `Liberou ${n} agrupamento(s) para Materiais`)] };
+            gerou = precisaNumero;
+            return {
+              ...s,
+              agrupamentos,
+              numeroLiberacao,
+              liberacaoEm: s.liberacaoEm ?? ts,
+              liberacaoPor: s.liberacaoPor ?? usuario,
+              historico: [
+                ...s.historico,
+                log(usuario, `Liberou ${n} agrupamento(s) para Materiais${precisaNumero ? ` · Liberação ${numeroLiberacao}` : ""}`),
+              ],
+            };
           }),
         });
+        if (gerou) set({ nextLiberacaoNum: get().nextLiberacaoNum + 1 });
       },
+
 
       movimentarAgrupamento: (solicId, agrupId, usuario) => {
         const ts = nowISO();
@@ -463,8 +481,8 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
-      version: 3,
-      // v3: reset completo — novo fluxo com Materiais, novos logins e novos statuses.
+      version: 4,
+      // v4: reset — números de liberação (Lxxxxxx) na tela de Materiais.
       migrate: () => {
         return {
           sessao: null,
@@ -475,6 +493,7 @@ export const useStore = create<AppState & Actions>()(
           nextPlanoNumP: 150,
           nextPlanoNumT: 320,
           nextDesafioId: 1,
+          nextLiberacaoNum: 100234,
           seeded: false,
         } as unknown as AppState & Actions;
       },
@@ -488,6 +507,7 @@ export const useStore = create<AppState & Actions>()(
           state.nextPlanoNumP = seed.nextPlanoNumP;
           state.nextPlanoNumT = seed.nextPlanoNumT;
           state.nextDesafioId = seed.nextDesafioId ?? 1;
+          state.nextLiberacaoNum = seed.nextLiberacaoNum ?? 100234;
           state.seeded = true;
         }
       },
