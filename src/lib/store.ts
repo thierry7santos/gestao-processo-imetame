@@ -242,6 +242,10 @@ export const useStore = create<AppState & Actions>()(
 
       liberarSolicitacao: (solicId, usuario) => {
         const ts = nowISO();
+        const alvo = get().solicitacoes.find((s) => s.id === solicId);
+        const precisaNumero = !!alvo && !alvo.numeroLiberacao;
+        const numeroLiberacao = precisaNumero ? `L${String(get().nextLiberacaoNum).padStart(6, "0")}` : alvo?.numeroLiberacao;
+        let gerou = false;
         set({
           solicitacoes: get().solicitacoes.map((s) => {
             if (s.id !== solicId) return s;
@@ -254,10 +258,23 @@ export const useStore = create<AppState & Actions>()(
               return a;
             });
             if (n === 0) return s;
-            return { ...s, agrupamentos, historico: [...s.historico, log(usuario, `Liberou ${n} agrupamento(s) para Materiais`)] };
+            gerou = precisaNumero;
+            return {
+              ...s,
+              agrupamentos,
+              numeroLiberacao,
+              liberacaoEm: s.liberacaoEm ?? ts,
+              liberacaoPor: s.liberacaoPor ?? usuario,
+              historico: [
+                ...s.historico,
+                log(usuario, `Liberou ${n} agrupamento(s) para Materiais${precisaNumero ? ` · Liberação ${numeroLiberacao}` : ""}`),
+              ],
+            };
           }),
         });
+        if (gerou) set({ nextLiberacaoNum: get().nextLiberacaoNum + 1 });
       },
+
 
       movimentarAgrupamento: (solicId, agrupId, usuario) => {
         const ts = nowISO();
