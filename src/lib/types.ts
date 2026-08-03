@@ -151,5 +151,6 @@ export interface AppState {
   nextPlanoNumP: number;
   nextPlanoNumT: number;
   nextDesafioId: number;
+  nextLiberacaoNum: number;
   seeded: boolean;
 }
