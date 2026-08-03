@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "cnc-flow",
+      "version": "0.1.0",
+      "title": "CNC Flow"
+    },
+    "tools": [
+      {
+        "name": "descrever_fluxo",
+        "title": "Descrever o fluxo de produção",
+        "description": "Descreve as etapas do fluxo de gestão de processos CNC (Planejamento → Programação → Materiais → Preparação → Operação) e os status gerados em cada uma.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_status",
+        "title": "Listar status do processo",
+        "description": "Lista os status possíveis de uma solicitação e de um agrupamento (corte) com o significado de cada um.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "escopo": {
+              "description": "Limita a resposta aos status de solicitação ou de corte.",
+              "type": "string",
+              "enum": [
+                "solicitacao",
+                "corte"
+              ]
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_maquinas",
+        "title": "Listar máquinas por tipo de plano",
+        "description": "Lista as máquinas de corte CNC disponíveis, opcionalmente filtradas por tipo de plano (Chapa, Perfil ou Tubulação).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "tipo": {
+              "description": "Tipo do plano para filtrar as máquinas.",
+              "type": "string",
+              "enum": [
+                "Chapa",
+                "Perfil",
+                "Tubulação"
+              ]
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_perfis",
+        "title": "Listar perfis e áreas de acesso",
+        "description": "Lista os perfis de acesso do aplicativo (Planejamento, Programação, Materiais, Preparação, Operação), as contas de demonstração de cada um e as máquinas que cada conta acessa.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
