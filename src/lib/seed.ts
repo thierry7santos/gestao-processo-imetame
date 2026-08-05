@@ -7,6 +7,7 @@ function agrup(id: string, nome: string, overrides: Partial<Agrupamento> = {}): 
     nome,
     pdfNome: `${nome}.pdf`,
     rir: "RIR-2026-" + Math.floor(1000 + Math.random() * 9000),
+    codigoMaterial: "CHA0100000000",
     material: "ASTM A36",
     espessura: 12.5,
     comprimento: 6000,
@@ -229,6 +230,92 @@ export function seedData(): {
     ],
   });
 
+
+  // ---- Massa de testes adicional (#0007 em diante) ----
+  const titulos = [
+    "Chapas do tanque pulmão", "Reforços de base", "Costado seção B", "Anéis de reforço",
+    "Tampos elípticos", "Suportes de tubulação", "Berços do vaso", "Escada e guarda-corpo",
+    "Plataforma de acesso", "Flanges cegos", "Perfis de contraventamento", "Vigas principais",
+    "Colunas de sustentação", "Cantoneiras de fixação", "Terças de cobertura", "Spools de processo",
+    "Bocais de inspeção", "Curvas e reduções", "Ramais secundários", "Conexões de dreno",
+  ];
+  const materiais: Record<string, { mat: string; cod: string }> = {
+    Chapa: { mat: "ASTM A36", cod: "CHA0100000000" },
+    Perfil: { mat: "ASTM A572 Gr50", cod: "PER0200000000" },
+    "Tubulação": { mat: "ASTM A106 Gr B", cod: "TUB0300000000" },
+  };
+  const estados: Array<"Liberado" | "Movimentado" | "Alocado" | "Cortado"> = [
+    "Liberado", "Liberado", "Movimentado", "Liberado", "Alocado",
+    "Movimentado", "Liberado", "Cortado", "Liberado", "Movimentado",
+  ];
+
+  let planoC = 1253, planoP = 151, planoT = 321, lib = 100238;
+
+  for (let i = 0; i < 20; i++) {
+    const n = 7 + i;
+    const tipo: "Chapa" | "Perfil" | "Tubulação" = i % 3 === 0 ? "Chapa" : i % 3 === 1 ? "Perfil" : "Tubulação";
+    const plano =
+      tipo === "Chapa" ? `${planoC++}C` : tipo === "Perfil" ? `${planoP++}P` : `${planoT++}T`;
+    const liberacao = "L" + (lib++);
+    const id = "#" + String(n).padStart(4, "0");
+    const est = estados[i % estados.length];
+    const nAgr = (i % 3) + 1;
+    const info = materiais[tipo];
+    const agrs: Agrupamento[] = [];
+    for (let k = 1; k <= nAgr; k++) {
+      const stKa = k === nAgr ? est : (est === "Liberado" ? "Liberado" : "Movimentado");
+      agrs.push(
+        agrup(`s${n}-a${k}`, `${plano}${String(k).padStart(2, "0")}`, {
+          statusCorte: stKa,
+          material: info.mat,
+          codigoMaterial: info.cod,
+          rir: `RIR-2026-${2000 + n * 7 + k}`,
+          espessura: [6.35, 9.5, 12.5, 19, 25.4][(i + k) % 5],
+          comprimento: [3000, 6000, 12000][(i + k) % 3],
+          largura: [1200, 1500, 2000, 2400][(i + k) % 4],
+          qtdItens: 6 + ((i * 3 + k) % 24),
+          peso: 380 + ((i * 137 + k * 53) % 1400),
+          tempoEstMin: 40 + ((i * 17 + k * 11) % 120),
+          chapaRecebida: stKa !== "Liberado",
+          liberadoEm: ts,
+          liberadoPor: "Carlos Planejador",
+          ...(stKa !== "Liberado"
+            ? { movimentadoEm: ts, movimentadoPor: "Luís Materiais" }
+            : {}),
+        }),
+      );
+    }
+    list.push({
+      id,
+      os: `075${1 + (i % 3)}.0${1 + (i % 8)}.0${(i % 9) + 1}0`,
+      titulo: titulos[i],
+      tipo,
+      dataNecessidade: addDays(hoje, (i % 12) - 1),
+      descricao: `${titulos[i]} — conforme desenho DES-${3000 + i}.`,
+      ...(tipo === "Perfil" ? { rirsPerfis: `RIR-P-2026-${100 + i}` } : {}),
+      ...(tipo === "Tubulação" ? { rirsTubos: `RIR-T-2026-${200 + i}` } : {}),
+      anexos: [{ nome: `DES-${3000 + i}.pdf` }],
+      emergencia: i % 9 === 0,
+      status: "Concluído",
+      planejadorCriador: i % 2 === 0 ? "Carlos Planejador" : "Ana Planejadora",
+      createdAt: ts,
+      numeroPlano: plano,
+      numeroLiberacao: liberacao,
+      liberacaoEm: ts,
+      liberacaoPor: "Carlos Planejador",
+      programador: "Marcos Programador",
+      inicioProg: ts,
+      fimProg: ts,
+      tempoOciosoMin: (i * 7) % 45,
+      agrupamentos: agrs,
+      historico: [
+        { usuario: "Carlos Planejador", dataHora: ts, mudanca: "Solicitação criada" },
+        { usuario: "Marcos Programador", dataHora: ts, mudanca: `Concluiu programação ${plano}` },
+        { usuario: "Carlos Planejador", dataHora: ts, mudanca: `Liberou ${nAgr} agrupamento(s) — ${liberacao}` },
+      ],
+    });
+  }
+
   const desafios: Desafio[] = [
     {
       id: "D-0001",
@@ -249,11 +336,11 @@ export function seedData(): {
   return {
     solicitacoes: list,
     desafios,
-    nextSolicId: 7,
-    nextPlanoNum: 1253,
-    nextPlanoNumP: 151,
-    nextPlanoNumT: 321,
+    nextSolicId: 27,
+    nextPlanoNum: planoC,
+    nextPlanoNumP: planoP,
+    nextPlanoNumT: planoT,
     nextDesafioId: 2,
-    nextLiberacaoNum: 100238,
+    nextLiberacaoNum: lib,
   };
 }
