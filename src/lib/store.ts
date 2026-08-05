@@ -481,8 +481,8 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
-      version: 4,
-      // v4: reset — números de liberação (Lxxxxxx) na tela de Materiais.
+      version: 5,
+      // v5: reset — seed ampliado + código de material nos agrupamentos.
       migrate: () => {
         return {
           sessao: null,

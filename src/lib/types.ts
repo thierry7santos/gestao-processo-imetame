@@ -67,6 +67,7 @@ export interface Agrupamento {
   pdfNome?: string;
   pdfUrl?: string;
   rir?: string;
+  codigoMaterial?: string;
   material?: string;
   espessura?: number;
   comprimento?: number;
