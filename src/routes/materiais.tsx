@@ -18,7 +18,8 @@ import { StatusBadge } from "@/components/app/AppShell";
 import { DesafioButton } from "@/components/app/DesafioButton";
 import { fmtDate, fmtDateTime, fmtMin } from "@/lib/formatters";
 import type { Agrupamento, Solicitacao, StatusCorte, TipoPlano } from "@/lib/types";
-import { History, PackageCheck, Truck, FileText, Search, Copy, FileDown } from "lucide-react";
+import { History, PackageCheck, Truck, FileText, Search, Copy, FileDown, Undo2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/materiais")({
@@ -62,9 +63,14 @@ function pesoTotal(s: Solicitacao): number {
   return s.agrupamentos.reduce((acc, a) => acc + (a.peso ?? 0), 0);
 }
 
+function areaNum(a: Agrupamento): string {
+  if (!a.comprimento || !a.largura) return "";
+  return ((a.comprimento * a.largura) / 1_000_000).toFixed(2);
+}
+
 function areaM2(a: Agrupamento): string {
-  if (!a.comprimento || !a.largura) return "—";
-  return ((a.comprimento * a.largura) / 1_000_000).toFixed(2) + " m²";
+  const n = areaNum(a);
+  return n ? n + " m²" : "—";
 }
 
 async function copiar(valor: string, rotulo: string) {
@@ -343,7 +349,7 @@ function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onC
                     rows={2}
                     placeholder="Observações do Materiais sobre este agrupamento"
                     value={a.obsMateriais ?? ""}
-                    onChange={(e) => setCampos(solic.id, a.id, { obsMateriais: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCampos(solic.id, a.id, { obsMateriais: e.target.value })}
                   />
                 </div>
               </div>
@@ -381,7 +387,7 @@ function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onC
   );
 }
 
-function Campo({ label, v, copiavel }: { label: string; v?: string; copiavel?: boolean }) {
+function Campo({ label, v, copiavel, copiarValor }: { label: string; v?: string; copiavel?: boolean; copiarValor?: string }) {
   const valor = v && v !== "—" ? v : "—";
   return (
     <div className="min-w-0">
@@ -394,7 +400,7 @@ function Campo({ label, v, copiavel }: { label: string; v?: string; copiavel?: b
             variant="ghost"
             className="h-7 w-7 shrink-0 p-0"
             title={`Copiar ${label}`}
-            onClick={() => copiar(valor, label)}
+            onClick={() => copiar(copiarValor ?? valor, label)}
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
