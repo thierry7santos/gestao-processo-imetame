@@ -178,7 +178,6 @@ function MateriaisPage() {
               <th className="text-left p-3">ID</th>
               <th className="text-left p-3">Solicitante</th>
               <th className="text-left p-3">OS</th>
-              <th className="text-left p-3">Título</th>
               <th className="text-left p-3">Status</th>
               <th className="text-left p-3">Plano</th>
               <th className="text-left p-3">Liberação</th>
@@ -188,7 +187,7 @@ function MateriaisPage() {
           </thead>
           <tbody>
             {liberadas.length === 0 && (
-              <tr><td colSpan={9} className="p-6 text-center text-muted-foreground text-xs">Nenhuma liberação encontrada.</td></tr>
+              <tr><td colSpan={8} className="p-6 text-center text-muted-foreground text-xs">Nenhuma liberação encontrada.</td></tr>
             )}
             {liberadas.map((s) => {
               const pend = s.agrupamentos.filter((a) => a.statusCorte === "Liberado").length;
@@ -200,15 +199,15 @@ function MateriaisPage() {
                 >
                   <td className="p-3 font-mono font-bold">{s.id}</td>
                   <td className="p-3 text-xs">{s.planejadorCriador}</td>
-                  <td className="p-3 font-mono text-xs">{s.os}</td>
-                  <td className="p-3">
-                    {s.titulo}
-                    <div className="text-[11px] text-muted-foreground">Necessidade {fmtDate(s.dataNecessidade)}</div>
+                  <td className="p-3 font-mono text-xs">
+                    {s.os}
+                    <div className="text-[11px] text-muted-foreground font-sans">Necessidade {fmtDate(s.dataNecessidade)}</div>
                   </td>
                   <td className="p-3"><StatusBadge status={statusReal(s)} /></td>
                   <td className="p-3 font-mono text-xs">{s.numeroPlano ?? "—"}</td>
                   <td className="p-3 font-mono text-xs text-primary">{s.numeroLiberacao}</td>
                   <td className="p-3 text-right font-mono">{pesoTotal(s).toLocaleString("pt-BR")} kg</td>
+
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="outline" className="h-10" onClick={() => setDetalhe(s.id)}>
