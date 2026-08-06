@@ -30,6 +30,8 @@ interface Actions {
   toggleChapaRecebida: (solicId: string, agrupId: string) => void;
   liberarSolicitacao: (solicId: string, usuario: string) => void;
   movimentarAgrupamento: (solicId: string, agrupId: string, usuario: string) => void;
+  desfazerMovimentacao: (solicId: string, agrupId: string, usuario: string) => void;
+  setCamposMateriais: (solicId: string, agrupId: string, patch: { obsMateriais?: string; localizacao?: string }) => void;
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
@@ -295,6 +297,38 @@ export const useStore = create<AppState & Actions>()(
         });
       },
 
+      desfazerMovimentacao: (solicId, agrupId, usuario) => {
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) =>
+                    a.id === agrupId && a.statusCorte === "Movimentado"
+                      ? { ...a, statusCorte: "Liberado", movimentadoEm: undefined, movimentadoPor: undefined, chapaRecebida: false }
+                      : a,
+                  ),
+                  historico: [...s.historico, log(usuario, `Materiais desfez a movimentação de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      setCamposMateriais: (solicId, agrupId, patch) => {
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => (a.id === agrupId ? { ...a, ...patch } : a)),
+                }
+              : s,
+          ),
+        });
+      },
+
+
       alocarAgrupamento: (solicId, agrupId, maquina, turno, diaISO, usuario) => {
         set({
           solicitacoes: get().solicitacoes.map((s) =>
@@ -481,8 +515,9 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
-      version: 5,
-      // v5: reset — seed ampliado + código de material nos agrupamentos.
+      version: 6,
+      // v6: reset — massa de teste ampliada (40 solicitações cobrindo todo o fluxo)
+      //     + campos de Observações e Localização no fluxo de Materiais.
       migrate: () => {
         return {
           sessao: null,

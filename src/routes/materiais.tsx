@@ -18,7 +18,8 @@ import { StatusBadge } from "@/components/app/AppShell";
 import { DesafioButton } from "@/components/app/DesafioButton";
 import { fmtDate, fmtDateTime, fmtMin } from "@/lib/formatters";
 import type { Agrupamento, Solicitacao, StatusCorte, TipoPlano } from "@/lib/types";
-import { History, PackageCheck, Truck, FileText, Search, Copy, FileDown } from "lucide-react";
+import { History, PackageCheck, Truck, FileText, Search, Copy, FileDown, Undo2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/materiais")({
@@ -62,9 +63,14 @@ function pesoTotal(s: Solicitacao): number {
   return s.agrupamentos.reduce((acc, a) => acc + (a.peso ?? 0), 0);
 }
 
+function areaNum(a: Agrupamento): string {
+  if (!a.comprimento || !a.largura) return "";
+  return ((a.comprimento * a.largura) / 1_000_000).toFixed(2);
+}
+
 function areaM2(a: Agrupamento): string {
-  if (!a.comprimento || !a.largura) return "—";
-  return ((a.comprimento * a.largura) / 1_000_000).toFixed(2) + " m²";
+  const n = areaNum(a);
+  return n ? n + " m²" : "—";
 }
 
 async function copiar(valor: string, rotulo: string) {
@@ -178,7 +184,6 @@ function MateriaisPage() {
               <th className="text-left p-3">ID</th>
               <th className="text-left p-3">Solicitante</th>
               <th className="text-left p-3">OS</th>
-              <th className="text-left p-3">Título</th>
               <th className="text-left p-3">Status</th>
               <th className="text-left p-3">Plano</th>
               <th className="text-left p-3">Liberação</th>
@@ -188,7 +193,7 @@ function MateriaisPage() {
           </thead>
           <tbody>
             {liberadas.length === 0 && (
-              <tr><td colSpan={9} className="p-6 text-center text-muted-foreground text-xs">Nenhuma liberação encontrada.</td></tr>
+              <tr><td colSpan={8} className="p-6 text-center text-muted-foreground text-xs">Nenhuma liberação encontrada.</td></tr>
             )}
             {liberadas.map((s) => {
               const pend = s.agrupamentos.filter((a) => a.statusCorte === "Liberado").length;
@@ -200,15 +205,15 @@ function MateriaisPage() {
                 >
                   <td className="p-3 font-mono font-bold">{s.id}</td>
                   <td className="p-3 text-xs">{s.planejadorCriador}</td>
-                  <td className="p-3 font-mono text-xs">{s.os}</td>
-                  <td className="p-3">
-                    {s.titulo}
-                    <div className="text-[11px] text-muted-foreground">Necessidade {fmtDate(s.dataNecessidade)}</div>
+                  <td className="p-3 font-mono text-xs">
+                    {s.os}
+                    <div className="text-[11px] text-muted-foreground font-sans">Necessidade {fmtDate(s.dataNecessidade)}</div>
                   </td>
                   <td className="p-3"><StatusBadge status={statusReal(s)} /></td>
                   <td className="p-3 font-mono text-xs">{s.numeroPlano ?? "—"}</td>
                   <td className="p-3 font-mono text-xs text-primary">{s.numeroLiberacao}</td>
                   <td className="p-3 text-right font-mono">{pesoTotal(s).toLocaleString("pt-BR")} kg</td>
+
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="outline" className="h-10" onClick={() => setDetalhe(s.id)}>
@@ -240,7 +245,10 @@ function MateriaisPage() {
 function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onClose: () => void }) {
   const sessao = useStore((s) => s.sessao);
   const movimentar = useStore((s) => s.movimentarAgrupamento);
+  const desfazer = useStore((s) => s.desfazerMovimentacao);
+  const setCampos = useStore((s) => s.setCamposMateriais);
   const user = sessao ? findUser(sessao.username) : undefined;
+  const [confirmar, setConfirmar] = useState<Agrupamento | null>(null);
   if (!solic) return null;
 
   return (
@@ -276,7 +284,7 @@ function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onC
                   <FileDown className="h-4 w-4 mr-1" /> Abrir PDF
                 </Button>
                 <DesafioButton solic={solic} agrup={a} size="sm" variant="ghost" label="Desafio" />
-                {a.statusCorte === "Liberado" ? (
+                {a.statusCorte === "Liberado" && (
                   <Button
                     size="sm"
                     className="bg-primary text-primary-foreground h-10"
@@ -287,9 +295,27 @@ function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onC
                   >
                     <Truck className="h-4 w-4 mr-1" /> Movimentar
                   </Button>
-                ) : (
+                )}
+                {a.statusCorte === "Movimentado" && (
+                  <>
+                    <span className="text-[11px] text-muted-foreground">
+                      Movimentado em {fmtDateTime(a.movimentadoEm)}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-destructive/50 text-destructive hover:bg-destructive/10"
+                      onClick={() => setConfirmar(a)}
+                    >
+                      <Undo2 className="h-4 w-4 mr-1" /> Desfazer movimentação
+                    </Button>
+                  </>
+                )}
+                {a.statusCorte !== "Liberado" && a.statusCorte !== "Movimentado" && (
                   <span className="text-[11px] text-muted-foreground">
-                    {a.movimentadoEm ? `Movimentado em ${fmtDateTime(a.movimentadoEm)}` : "Aguardando liberação"}
+                    {a.statusCorte === "Aguardando"
+                      ? "Aguardando liberação"
+                      : `Já ${a.statusCorte.toLowerCase()} — movimentação não pode ser desfeita`}
                   </span>
                 )}
               </div>
@@ -302,19 +328,66 @@ function AgrupamentosDialog({ solic, onClose }: { solic: Solicitacao | null; onC
                 <Campo label="Largura" v={a.largura ? `${a.largura} mm` : undefined} />
                 <Campo label="Qtd. itens" v={a.qtdItens?.toString()} />
                 <Campo label="Peso" v={a.peso ? `${a.peso.toLocaleString("pt-BR")} kg` : undefined} />
-                <Campo label="Área" v={areaM2(a)} />
+                <Campo label="Área" v={areaM2(a)} copiavel copiarValor={areaNum(a)} />
                 <Campo label="Tempo estimado" v={fmtMin(a.tempoEstMin)} />
                 <Campo label="Status" v={a.statusCorte} />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">Localização</Label>
+                  <Input
+                    className="h-11"
+                    placeholder="Ex.: Lucro · Cabide B2"
+                    value={a.localizacao ?? ""}
+                    onChange={(e) => setCampos(solic.id, a.id, { localizacao: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Observações do agrupamento</Label>
+                  <Textarea
+                    className="min-h-11"
+                    rows={2}
+                    placeholder="Observações do Materiais sobre este agrupamento"
+                    value={a.obsMateriais ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCampos(solic.id, a.id, { obsMateriais: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           ))}
         </div>
+
+        <Dialog open={!!confirmar} onOpenChange={(b) => !b && setConfirmar(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Deseja realmente desfazer a movimentação?</DialogTitle></DialogHeader>
+            <p className="text-xs text-muted-foreground">
+              O agrupamento <span className="font-mono">{confirmar?.nome}</span> voltará para o status
+              {" "}<strong>Liberado</strong> e sairá da fila da Preparação.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" className="h-11" onClick={() => setConfirmar(null)}>Cancelar</Button>
+              <Button
+                className="h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (confirmar) {
+                    desfazer(solic.id, confirmar.id, user?.nome ?? "Materiais");
+                    toast.success(`Movimentação de ${confirmar.nome} desfeita`);
+                  }
+                  setConfirmar(null);
+                }}
+              >
+                Sim, desfazer
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </DialogContent>
     </Dialog>
   );
 }
 
-function Campo({ label, v, copiavel }: { label: string; v?: string; copiavel?: boolean }) {
+function Campo({ label, v, copiavel, copiarValor }: { label: string; v?: string; copiavel?: boolean; copiarValor?: string }) {
   const valor = v && v !== "—" ? v : "—";
   return (
     <div className="min-w-0">
@@ -327,7 +400,7 @@ function Campo({ label, v, copiavel }: { label: string; v?: string; copiavel?: b
             variant="ghost"
             className="h-7 w-7 shrink-0 p-0"
             title={`Copiar ${label}`}
-            onClick={() => copiar(valor, label)}
+            onClick={() => copiar(copiarValor ?? valor, label)}
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
