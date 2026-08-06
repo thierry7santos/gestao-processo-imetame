@@ -297,6 +297,38 @@ export const useStore = create<AppState & Actions>()(
         });
       },
 
+      desfazerMovimentacao: (solicId, agrupId, usuario) => {
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) =>
+                    a.id === agrupId && a.statusCorte === "Movimentado"
+                      ? { ...a, statusCorte: "Liberado", movimentadoEm: undefined, movimentadoPor: undefined, chapaRecebida: false }
+                      : a,
+                  ),
+                  historico: [...s.historico, log(usuario, `Materiais desfez a movimentação de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      setCamposMateriais: (solicId, agrupId, patch) => {
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => (a.id === agrupId ? { ...a, ...patch } : a)),
+                }
+              : s,
+          ),
+        });
+      },
+
+
       alocarAgrupamento: (solicId, agrupId, maquina, turno, diaISO, usuario) => {
         set({
           solicitacoes: get().solicitacoes.map((s) =>
