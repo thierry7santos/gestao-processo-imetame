@@ -515,9 +515,9 @@ export const useStore = create<AppState & Actions>()(
     }),
     {
       name: "ime-cnc-store",
-      version: 5,
-      // v5: reset — seed ampliado + código de material nos agrupamentos.
-      migrate: () => {
+      version: 6,
+      // v6: reset — massa de teste ampliada (40 solicitações cobrindo todo o fluxo)
+      //     + campos de Observações e Localização no fluxo de Materiais.
         return {
           sessao: null,
           solicitacoes: [],
