@@ -518,6 +518,7 @@ export const useStore = create<AppState & Actions>()(
       version: 6,
       // v6: reset — massa de teste ampliada (40 solicitações cobrindo todo o fluxo)
       //     + campos de Observações e Localização no fluxo de Materiais.
+      migrate: () => {
         return {
           sessao: null,
           solicitacoes: [],
