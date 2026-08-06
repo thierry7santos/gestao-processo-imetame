@@ -92,6 +92,10 @@ export interface Agrupamento {
   liberadoPor?: string;
   movimentadoEm?: string;
   movimentadoPor?: string;
+  /** Observações registradas pelo Materiais. */
+  obsMateriais?: string;
+  /** Localização física da chapa/material (ex.: Lucro, Cabide B2). */
+  localizacao?: string;
 }
 
 export interface Solicitacao {
