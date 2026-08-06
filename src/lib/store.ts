@@ -30,6 +30,8 @@ interface Actions {
   toggleChapaRecebida: (solicId: string, agrupId: string) => void;
   liberarSolicitacao: (solicId: string, usuario: string) => void;
   movimentarAgrupamento: (solicId: string, agrupId: string, usuario: string) => void;
+  desfazerMovimentacao: (solicId: string, agrupId: string, usuario: string) => void;
+  setCamposMateriais: (solicId: string, agrupId: string, patch: { obsMateriais?: string; localizacao?: string }) => void;
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
