@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { USUARIOS, findUser, homeFor } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Factory, KeyRound } from "lucide-react";
+import { Factory, KeyRound, Tv } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
