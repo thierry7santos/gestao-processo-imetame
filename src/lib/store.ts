@@ -12,7 +12,7 @@ import type {
   Desafio,
   Perfil,
 } from "./types";
-import { nowISO } from "./formatters";
+import { nowISO, minutesBetween } from "./formatters";
 import { seedData } from "./seed";
 
 interface Actions {
