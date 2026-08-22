@@ -62,6 +62,9 @@ function LoginPage() {
         <div className="text-[11px] text-muted-foreground">
           © {new Date().getFullYear()} Imetame · Uso interno
         </div>
+        <Link to="/andon" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+          <Tv className="h-3.5 w-3.5" /> Abrir Painel Andon (TV do chão de fábrica)
+        </Link>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-10">
