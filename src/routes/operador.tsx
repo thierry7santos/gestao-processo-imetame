@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fmtDateTime, todayISO } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, StatusCorte, Validacao } from "@/lib/types";
-import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle } from "lucide-react";
+import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
   iniciarCorte as svcIniciarCorte,
