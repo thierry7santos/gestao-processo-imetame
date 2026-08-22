@@ -11,11 +11,14 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate } from "@/lib/formatters";
+import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate, minutesBetween, fmtDateTime } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, Turno } from "@/lib/types";
-import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon, Wrench, PlayCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar } from "@/services/dataService";
+import {
+  aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar,
+  iniciarSetup as svcIniciarSetup, finalizarSetup as svcFinalizarSetup,
+} from "@/services/dataService";
 import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/encarregado")({
