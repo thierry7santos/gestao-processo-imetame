@@ -34,6 +34,8 @@ interface Actions {
   setCamposMateriais: (solicId: string, agrupId: string, patch: { obsMateriais?: string; localizacao?: string }) => void;
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
+  iniciarSetup: (solicId: string, agrupId: string, usuario: string) => void;
+  finalizarSetup: (solicId: string, agrupId: string, usuario: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
   paralisarCorte: (solicId: string, agrupId: string, operador: string, motivo: string) => void;
   retomarCorte: (solicId: string, agrupId: string, operador: string) => void;
