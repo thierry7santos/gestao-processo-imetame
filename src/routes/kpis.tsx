@@ -374,3 +374,18 @@ function KpiCard({ label, value, tone = "ok" }: { label: string; value: string; 
     </Card>
   );
 }
+
+function OeeBar({ label, value }: { label: string; value: number }) {
+  const color = value >= 85 ? "bg-primary" : value >= 65 ? "bg-yellow-400" : "bg-destructive";
+  return (
+    <div>
+      <div className="flex justify-between text-[10px] text-muted-foreground">
+        <span>{label}</span>
+        <span className="font-mono font-bold">{value}%</span>
+      </div>
+      <div className="h-2 rounded bg-muted mt-0.5 overflow-hidden">
+        <div className={`h-full ${color}`} style={{ width: `${Math.min(100, value)}%` }} />
+      </div>
+    </div>
+  );
+}
