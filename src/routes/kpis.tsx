@@ -128,6 +128,39 @@ function KpisPage() {
     return { planosPeriodo, tempoTotalProg, tempoOciosoTotal, paralisados };
   }, [solicitacoes, range]);
 
+  // OEE por máquina: Disponibilidade × Performance × Qualidade
+  const oeePorMaquina = useMemo(() => {
+    const map = new Map<string, { maq: string; corteMin: number; setupMin: number; paradaMin: number; estMin: number; realMin: number; ok: number; total: number }>();
+    for (const s of solicitacoes) {
+      for (const a of s.agrupamentos) {
+        if (a.statusCorte !== "Cortado" || !a.inicioCorte || !a.fimCorte) continue;
+        const dia = a.inicioCorte.slice(0, 10);
+        if (dia < range.start || dia > range.end) continue;
+        if (maquina !== "todas" && a.maquina !== maquina) continue;
+        if (operador !== "todos" && a.operador !== operador) continue;
+        const key = a.maquina ?? "CNC-3";
+        const row = map.get(key) ?? { maq: key, corteMin: 0, setupMin: 0, paradaMin: 0, estMin: 0, realMin: 0, ok: 0, total: 0 };
+        const realMin = minutesBetween(a.inicioCorte, a.fimCorte);
+        row.corteMin += realMin;
+        row.setupMin += a.setupMin ?? 0;
+        row.paradaMin += (a.paradas ?? []).reduce((acc, p) => acc + minutesBetween(p.inicio, p.fim ?? a.fimCorte!), 0);
+        row.estMin += a.tempoEstMin ?? 0;
+        row.realMin += realMin;
+        row.total++;
+        if (a.qualidadeOk) row.ok++;
+        map.set(key, row);
+      }
+    }
+    return Array.from(map.values()).map((r) => {
+      const prod = r.corteMin + r.setupMin + r.paradaMin; // tempo produtivo consumido
+      const disp = prod > 0 ? Math.min(1, r.corteMin / prod) : 0;
+      const perf = r.realMin > 0 ? Math.min(1.5, r.estMin / r.realMin) : 0;
+      const qual = r.total > 0 ? r.ok / r.total : 0;
+      const oee = Math.round(disp * perf * qual * 100);
+      return { ...r, disp: Math.round(disp * 100), perf: Math.round(perf * 100), qual: Math.round(qual * 100), oee };
+    });
+  }, [solicitacoes, range, maquina, operador]);
+
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
       <header>
