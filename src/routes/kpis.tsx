@@ -224,6 +224,7 @@ function KpisPage() {
         <TabsList>
           <TabsTrigger value="programacao">Programação</TabsTrigger>
           <TabsTrigger value="corte">Corte</TabsTrigger>
+          <TabsTrigger value="oee">OEE</TabsTrigger>
         </TabsList>
 
         <TabsContent value="programacao" className="space-y-4 mt-4">
