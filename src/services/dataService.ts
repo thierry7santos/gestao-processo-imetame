@@ -48,6 +48,10 @@ export const alocarAgrupamento = (solicId: string, agrupId: string, maquina: Maq
   useStore.getState().alocarAgrupamento(solicId, agrupId, maquina, turno, diaISO, usuario);
 export const desalocarAgrupamento = (solicId: string, agrupId: string) =>
   useStore.getState().desalocarAgrupamento(solicId, agrupId);
+export const iniciarSetup = (solicId: string, agrupId: string, usuario: string) =>
+  useStore.getState().iniciarSetup(solicId, agrupId, usuario);
+export const finalizarSetup = (solicId: string, agrupId: string, usuario: string) =>
+  useStore.getState().finalizarSetup(solicId, agrupId, usuario);
 
 // CORTE
 export const iniciarCorte = (solicId: string, agrupId: string, operador: string, validacao: Validacao) =>
