@@ -357,9 +357,46 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado"
-                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado" }
+                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado", inicioSetup: undefined, fimSetup: undefined, setupMin: undefined, setupPor: undefined }
                       : a,
                   ),
+                }
+              : s,
+          ),
+        });
+      },
+
+      iniciarSetup: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) =>
+                    a.id === agrupId && a.statusCorte === "Alocado" && !a.inicioSetup
+                      ? { ...a, inicioSetup: ts, setupPor: usuario }
+                      : a,
+                  ),
+                  historico: [...s.historico, log(usuario, `Iniciou setup de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      finalizarSetup: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => {
+                    if (a.id !== agrupId || !a.inicioSetup || a.fimSetup) return a;
+                    return { ...a, fimSetup: ts, setupMin: minutesBetween(a.inicioSetup, ts), setupPor: usuario };
+                  }),
+                  historico: [...s.historico, log(usuario, `Finalizou setup de ${a_(s, agrupId)}`)],
                 }
               : s,
           ),
