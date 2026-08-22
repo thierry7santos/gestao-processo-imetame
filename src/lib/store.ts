@@ -428,7 +428,9 @@ export const useStore = create<AppState & Actions>()(
               ? {
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
-                    a.id === agrupId ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador } : a,
+                    a.id === agrupId
+                      ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador, qualidadeOk: !a.validacao?.divergenciaAceita }
+                      : a,
                   ),
                   historico: [...s.historico, log(operador, `Finalizou corte de ${a_(s, agrupId)}`)],
                 }
