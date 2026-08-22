@@ -124,6 +124,12 @@
 @utility pulse-red {
   animation: pulse-red 1s ease-in-out infinite;
 }
+@utility pulse-green {
+  animation: pulse-green 1.6s ease-in-out infinite;
+}
+@utility border-pulse-green {
+  animation: border-pulse-green 1.6s ease-in-out infinite;
+}
 
 @keyframes pulse-orange {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--warn-orange) 60%, transparent); }
