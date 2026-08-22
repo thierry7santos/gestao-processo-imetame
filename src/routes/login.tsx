@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { USUARIOS, findUser, homeFor } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Factory, KeyRound } from "lucide-react";
+import { Factory, KeyRound, Tv } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -62,6 +62,9 @@ function LoginPage() {
         <div className="text-[11px] text-muted-foreground">
           © {new Date().getFullYear()} Imetame · Uso interno
         </div>
+        <Link to="/andon" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
+          <Tv className="h-3.5 w-3.5" /> Abrir Painel Andon (TV do chão de fábrica)
+        </Link>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-10">

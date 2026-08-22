@@ -18,6 +18,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as EncarregadoRouteImport } from './routes/encarregado'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as AndonRouteImport } from './routes/andon'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -68,6 +69,11 @@ const AuditoriaRoute = AuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AndonRoute = AndonRouteImport.update({
+  id: '/andon',
+  path: '/andon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -94,6 +100,7 @@ const Char91DotmcpChar93InvokeToolToolRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/andon': typeof AndonRoute
   '/auditoria': typeof AuditoriaRoute
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/andon': typeof AndonRoute
   '/auditoria': typeof AuditoriaRoute
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/andon': typeof AndonRoute
   '/auditoria': typeof AuditoriaRoute
   '/encarregado': typeof EncarregadoRoute
   '/kpis': typeof KpisRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/andon'
     | '/auditoria'
     | '/encarregado'
     | '/kpis'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/andon'
     | '/auditoria'
     | '/encarregado'
     | '/kpis'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/andon'
     | '/auditoria'
     | '/encarregado'
     | '/kpis'
@@ -188,6 +200,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AndonRoute: typeof AndonRoute
   AuditoriaRoute: typeof AuditoriaRoute
   EncarregadoRoute: typeof EncarregadoRoute
   KpisRoute: typeof KpisRoute
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/andon': {
+      id: '/andon'
+      path: '/andon'
+      fullPath: '/andon'
+      preLoaderRoute: typeof AndonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -300,6 +320,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AndonRoute: AndonRoute,
   AuditoriaRoute: AuditoriaRoute,
   EncarregadoRoute: EncarregadoRoute,
   KpisRoute: KpisRoute,

@@ -12,7 +12,7 @@ import type {
   Desafio,
   Perfil,
 } from "./types";
-import { nowISO } from "./formatters";
+import { nowISO, minutesBetween } from "./formatters";
 import { seedData } from "./seed";
 
 interface Actions {
@@ -34,6 +34,8 @@ interface Actions {
   setCamposMateriais: (solicId: string, agrupId: string, patch: { obsMateriais?: string; localizacao?: string }) => void;
   alocarAgrupamento: (solicId: string, agrupId: string, maquina: Maquina, turno: Turno, diaISO: string, usuario: string) => void;
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
+  iniciarSetup: (solicId: string, agrupId: string, usuario: string) => void;
+  finalizarSetup: (solicId: string, agrupId: string, usuario: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
   paralisarCorte: (solicId: string, agrupId: string, operador: string, motivo: string) => void;
   retomarCorte: (solicId: string, agrupId: string, operador: string) => void;
@@ -355,9 +357,46 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado"
-                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado" }
+                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado", inicioSetup: undefined, fimSetup: undefined, setupMin: undefined, setupPor: undefined }
                       : a,
                   ),
+                }
+              : s,
+          ),
+        });
+      },
+
+      iniciarSetup: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) =>
+                    a.id === agrupId && a.statusCorte === "Alocado" && !a.inicioSetup
+                      ? { ...a, inicioSetup: ts, setupPor: usuario }
+                      : a,
+                  ),
+                  historico: [...s.historico, log(usuario, `Iniciou setup de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      finalizarSetup: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => {
+                    if (a.id !== agrupId || !a.inicioSetup || a.fimSetup) return a;
+                    return { ...a, fimSetup: ts, setupMin: minutesBetween(a.inicioSetup, ts), setupPor: usuario };
+                  }),
+                  historico: [...s.historico, log(usuario, `Finalizou setup de ${a_(s, agrupId)}`)],
                 }
               : s,
           ),
@@ -389,7 +428,9 @@ export const useStore = create<AppState & Actions>()(
               ? {
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
-                    a.id === agrupId ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador } : a,
+                    a.id === agrupId
+                      ? { ...a, statusCorte: "Cortado", fimCorte: nowISO(), obsOperacao: obs, operador, qualidadeOk: !a.validacao?.divergenciaAceita }
+                      : a,
                   ),
                   historico: [...s.historico, log(operador, `Finalizou corte de ${a_(s, agrupId)}`)],
                 }

@@ -128,6 +128,39 @@ function KpisPage() {
     return { planosPeriodo, tempoTotalProg, tempoOciosoTotal, paralisados };
   }, [solicitacoes, range]);
 
+  // OEE por máquina: Disponibilidade × Performance × Qualidade
+  const oeePorMaquina = useMemo(() => {
+    const map = new Map<string, { maq: string; corteMin: number; setupMin: number; paradaMin: number; estMin: number; realMin: number; ok: number; total: number }>();
+    for (const s of solicitacoes) {
+      for (const a of s.agrupamentos) {
+        if (a.statusCorte !== "Cortado" || !a.inicioCorte || !a.fimCorte) continue;
+        const dia = a.inicioCorte.slice(0, 10);
+        if (dia < range.start || dia > range.end) continue;
+        if (maquina !== "todas" && a.maquina !== maquina) continue;
+        if (operador !== "todos" && a.operador !== operador) continue;
+        const key = a.maquina ?? "CNC-3";
+        const row = map.get(key) ?? { maq: key, corteMin: 0, setupMin: 0, paradaMin: 0, estMin: 0, realMin: 0, ok: 0, total: 0 };
+        const realMin = minutesBetween(a.inicioCorte, a.fimCorte);
+        row.corteMin += realMin;
+        row.setupMin += a.setupMin ?? 0;
+        row.paradaMin += (a.paradas ?? []).reduce((acc, p) => acc + minutesBetween(p.inicio, p.fim ?? a.fimCorte!), 0);
+        row.estMin += a.tempoEstMin ?? 0;
+        row.realMin += realMin;
+        row.total++;
+        if (a.qualidadeOk) row.ok++;
+        map.set(key, row);
+      }
+    }
+    return Array.from(map.values()).map((r) => {
+      const prod = r.corteMin + r.setupMin + r.paradaMin; // tempo produtivo consumido
+      const disp = prod > 0 ? Math.min(1, r.corteMin / prod) : 0;
+      const perf = r.realMin > 0 ? Math.min(1.5, r.estMin / r.realMin) : 0;
+      const qual = r.total > 0 ? r.ok / r.total : 0;
+      const oee = Math.round(disp * perf * qual * 100);
+      return { ...r, disp: Math.round(disp * 100), perf: Math.round(perf * 100), qual: Math.round(qual * 100), oee };
+    });
+  }, [solicitacoes, range, maquina, operador]);
+
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
       <header>
@@ -191,6 +224,7 @@ function KpisPage() {
         <TabsList>
           <TabsTrigger value="programacao">Programação</TabsTrigger>
           <TabsTrigger value="corte">Corte</TabsTrigger>
+          <TabsTrigger value="oee">OEE</TabsTrigger>
         </TabsList>
 
         <TabsContent value="programacao" className="space-y-4 mt-4">
@@ -299,6 +333,34 @@ function KpisPage() {
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="oee" className="space-y-4 mt-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold">OEE por máquina — Disponibilidade × Performance × Qualidade</h3>
+              <div className="text-[11px] text-muted-foreground">Disponibilidade = corte / (corte + setup + paradas) · Performance = estimado / real · Qualidade = peças sem divergência / total</div>
+            </div>
+            <div className="space-y-3">
+              {oeePorMaquina.map((m) => (
+                <div key={m.maq} className="p-3 rounded bg-secondary">
+                  <div className="flex justify-between items-baseline mb-2">
+                    <div className="font-bold text-base">{m.maq}</div>
+                    <div className={`font-mono text-3xl font-extrabold ${m.oee >= 85 ? "text-primary" : m.oee >= 65 ? "text-yellow-400" : "text-destructive"}`}>{m.oee}%</div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <OeeBar label="Disponibilidade" value={m.disp} />
+                    <OeeBar label="Performance" value={m.perf} />
+                    <OeeBar label="Qualidade" value={m.qual} />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-2">
+                    Corte {fmtMin(m.corteMin)} · Setup {fmtMin(m.setupMin)} · Paradas {fmtMin(m.paradaMin)} · Estimado {fmtMin(m.estMin)} · {m.ok}/{m.total} peças OK
+                  </div>
+                </div>
+              ))}
+              {oeePorMaquina.length === 0 && <div className="text-sm text-muted-foreground">Sem cortes no período para calcular OEE.</div>}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -310,5 +372,20 @@ function KpiCard({ label, value, tone = "ok" }: { label: string; value: string; 
       <div className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</div>
       <div className={`text-2xl font-bold font-mono ${tone === "warn" ? "text-yellow-400" : "text-primary"}`}>{value}</div>
     </Card>
+  );
+}
+
+function OeeBar({ label, value }: { label: string; value: number }) {
+  const color = value >= 85 ? "bg-primary" : value >= 65 ? "bg-yellow-400" : "bg-destructive";
+  return (
+    <div>
+      <div className="flex justify-between text-[10px] text-muted-foreground">
+        <span>{label}</span>
+        <span className="font-mono font-bold">{value}%</span>
+      </div>
+      <div className="h-2 rounded bg-muted mt-0.5 overflow-hidden">
+        <div className={`h-full ${color}`} style={{ width: `${Math.min(100, value)}%` }} />
+      </div>
+    </div>
   );
 }

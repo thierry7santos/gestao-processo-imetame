@@ -11,11 +11,14 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate } from "@/lib/formatters";
+import { fmtMin, todayISO, startOfWeek, addDays, weekDays, fmtDate, minutesBetween, fmtDateTime } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, Turno } from "@/lib/types";
-import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon, Wrench, PlayCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar } from "@/services/dataService";
+import {
+  aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar,
+  iniciarSetup as svcIniciarSetup, finalizarSetup as svcFinalizarSetup,
+} from "@/services/dataService";
 import { DesafioButton } from "@/components/app/DesafioButton";
 
 export const Route = createFileRoute("/encarregado")({
@@ -260,7 +263,9 @@ function EncarregadoPage() {
                     const cls = b.agrup.statusCorte === "Cortado" ? "bg-primary/25 border-primary/60"
                       : b.agrup.statusCorte === "Em Corte" ? "bg-yellow-500/25 border-yellow-500/60"
                       : b.agrup.statusCorte === "Corte Paralisado" ? "bg-orange-500/25 border-orange-500/60 pulse-orange"
+                      : b.agrup.inicioSetup && !b.agrup.fimSetup ? "bg-purple-500/15 border-purple-500/60"
                       : "bg-blue-500/15 border-blue-500/40";
+                    const setupEmAndamento = !!b.agrup.inicioSetup && !b.agrup.fimSetup;
                     return (
                       <div key={b.agrup.id} className={`p-1.5 rounded border ${cls} text-[11px]`}>
                         <div className="flex items-center justify-between">
@@ -276,6 +281,38 @@ function EncarregadoPage() {
                           <span>{b.agrup.peso}kg</span>
                         </div>
                         <StatusBadge status={b.agrup.statusCorte} />
+                        {b.agrup.statusCorte === "Alocado" && (
+                          <div className="mt-1 space-y-1">
+                            {b.agrup.inicioSetup && b.agrup.fimSetup && (
+                              <div className="text-[10px] text-primary flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" /> Setup {fmtMin(b.agrup.setupMin)} · pronto p/ corte
+                              </div>
+                            )}
+                            {setupEmAndamento && (
+                              <div className="text-[10px] text-purple-300 flex items-center gap-1">
+                                <Wrench className="h-3 w-3 animate-spin" /> Setup desde {fmtDateTime(b.agrup.inicioSetup).slice(11, 16)}
+                              </div>
+                            )}
+                            {!b.agrup.inicioSetup && (
+                              <Button
+                                size="sm"
+                                className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 text-white"
+                                onClick={() => { svcIniciarSetup(b.solic.id, b.agrup.id, user.nome); toast("Setup iniciado"); }}
+                              >
+                                <PlayCircle className="h-3 w-3 mr-1" /> Iniciar Setup
+                              </Button>
+                            )}
+                            {setupEmAndamento && (
+                              <Button
+                                size="sm"
+                                className="w-full h-7 text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground"
+                                onClick={() => { svcFinalizarSetup(b.solic.id, b.agrup.id, user.nome); toast.success("Setup finalizado — pronto para corte"); }}
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Finalizar Setup
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

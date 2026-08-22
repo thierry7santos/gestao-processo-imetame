@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fmtDateTime, todayISO } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, StatusCorte, Validacao } from "@/lib/types";
-import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle } from "lucide-react";
+import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import {
   iniciarCorte as svcIniciarCorte,
@@ -159,9 +159,16 @@ function OperadorPage() {
               )}
 
               {!cut && !cutting && !paused && (
-                <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
-                  <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
-                </Button>
+                !agrup.fimSetup ? (
+                  <div className="w-full h-16 grid place-items-center rounded-md bg-secondary text-muted-foreground text-base font-semibold flex flex-col items-center justify-center gap-0.5">
+                    <Wrench className="h-5 w-5" />
+                    <span className="text-xs">Aguardando setup da preparação</span>
+                  </div>
+                ) : (
+                  <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
+                    <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
+                  </Button>
+                )
               )}
 
               {cutting && (
