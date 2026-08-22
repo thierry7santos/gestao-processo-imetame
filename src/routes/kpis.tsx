@@ -333,6 +333,34 @@ function KpisPage() {
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="oee" className="space-y-4 mt-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold">OEE por máquina — Disponibilidade × Performance × Qualidade</h3>
+              <div className="text-[11px] text-muted-foreground">Disponibilidade = corte / (corte + setup + paradas) · Performance = estimado / real · Qualidade = peças sem divergência / total</div>
+            </div>
+            <div className="space-y-3">
+              {oeePorMaquina.map((m) => (
+                <div key={m.maq} className="p-3 rounded bg-secondary">
+                  <div className="flex justify-between items-baseline mb-2">
+                    <div className="font-bold text-base">{m.maq}</div>
+                    <div className={`font-mono text-3xl font-extrabold ${m.oee >= 85 ? "text-primary" : m.oee >= 65 ? "text-yellow-400" : "text-destructive"}`}>{m.oee}%</div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <OeeBar label="Disponibilidade" value={m.disp} />
+                    <OeeBar label="Performance" value={m.perf} />
+                    <OeeBar label="Qualidade" value={m.qual} />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-2">
+                    Corte {fmtMin(m.corteMin)} · Setup {fmtMin(m.setupMin)} · Paradas {fmtMin(m.paradaMin)} · Estimado {fmtMin(m.estMin)} · {m.ok}/{m.total} peças OK
+                  </div>
+                </div>
+              ))}
+              {oeePorMaquina.length === 0 && <div className="text-sm text-muted-foreground">Sem cortes no período para calcular OEE.</div>}
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
