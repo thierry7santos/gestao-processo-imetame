@@ -290,26 +290,13 @@ function EncarregadoPage() {
                             )}
                             {setupEmAndamento && (
                               <div className="text-[10px] text-purple-300 flex items-center gap-1">
-                                <Wrench className="h-3 w-3 animate-spin" /> Setup desde {fmtDateTime(b.agrup.inicioSetup).slice(11, 16)}
+                                <Wrench className="h-3 w-3 animate-spin" /> Em setup desde {fmtDateTime(b.agrup.inicioSetup).slice(11, 16)}
                               </div>
                             )}
                             {!b.agrup.inicioSetup && (
-                              <Button
-                                size="sm"
-                                className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 text-white"
-                                onClick={() => { svcIniciarSetup(b.solic.id, b.agrup.id, user.nome); toast("Setup iniciado"); }}
-                              >
-                                <PlayCircle className="h-3 w-3 mr-1" /> Iniciar Setup
-                              </Button>
-                            )}
-                            {setupEmAndamento && (
-                              <Button
-                                size="sm"
-                                className="w-full h-7 text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground"
-                                onClick={() => { svcFinalizarSetup(b.solic.id, b.agrup.id, user.nome); toast.success("Setup finalizado — pronto para corte"); }}
-                              >
-                                <CheckCircle2 className="h-3 w-3 mr-1" /> Finalizar Setup
-                              </Button>
+                              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Wrench className="h-3 w-3" /> Aguardando setup do operador
+                              </div>
                             )}
                           </div>
                         )}
