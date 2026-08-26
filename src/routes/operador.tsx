@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { findUser, maquinasDoUsuario } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
@@ -22,13 +22,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fmtDateTime, todayISO } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, StatusCorte, Validacao } from "@/lib/types";
-import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench } from "lucide-react";
+import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   iniciarCorte as svcIniciarCorte,
   finalizarCorte as svcFinalizarCorte,
   paralisarCorte as svcParalisarCorte,
   retomarCorte as svcRetomarCorte,
+  iniciarSetup as svcIniciarSetup,
+  finalizarSetup as svcFinalizarSetup,
+  reabrirSetup as svcReabrirSetup,
   MOTIVOS_PARADA,
 } from "@/services/dataService";
 import { DesafioButton } from "@/components/app/DesafioButton";
@@ -42,6 +45,19 @@ export const Route = createFileRoute("/operador")({
 });
 
 // MAQUINAS agora vem do tipo do usuário (Chapa/Perfil/Tubo).
+
+function setupElapsed(agrup: Agrupamento, nowMs: number) {
+  const sessoes = agrup.setupSessoes?.length
+    ? agrup.setupSessoes
+    : agrup.inicioSetup
+    ? [{ inicio: agrup.inicioSetup, fim: agrup.fimSetup }]
+    : [];
+  const ms = sessoes.reduce(
+    (acc, s) => acc + ((s.fim ? new Date(s.fim).getTime() : nowMs) - new Date(s.inicio).getTime()),
+    0,
+  );
+  return Math.max(0, Math.round(ms / 60000));
+}
 
 const ORDER_STATUS: Record<StatusCorte, number> = {
   "Alocado": 0,
