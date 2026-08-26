@@ -52,6 +52,8 @@ export const iniciarSetup = (solicId: string, agrupId: string, usuario: string) 
   useStore.getState().iniciarSetup(solicId, agrupId, usuario);
 export const finalizarSetup = (solicId: string, agrupId: string, usuario: string) =>
   useStore.getState().finalizarSetup(solicId, agrupId, usuario);
+export const reabrirSetup = (solicId: string, agrupId: string, usuario: string) =>
+  useStore.getState().reabrirSetup(solicId, agrupId, usuario);
 
 // CORTE
 export const iniciarCorte = (solicId: string, agrupId: string, operador: string, validacao: Validacao) =>

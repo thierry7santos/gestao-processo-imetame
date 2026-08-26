@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { findUser, maquinasDoUsuario } from "@/lib/auth";
 import { RequireAuth } from "@/components/app/RequireAuth";
@@ -22,13 +22,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fmtDateTime, todayISO } from "@/lib/formatters";
 import type { Agrupamento, Maquina, Solicitacao, StatusCorte, Validacao } from "@/lib/types";
-import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench } from "lucide-react";
+import { FileText, Play, StopCircle, ShieldAlert, PauseCircle, PlayCircle, Wrench, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   iniciarCorte as svcIniciarCorte,
   finalizarCorte as svcFinalizarCorte,
   paralisarCorte as svcParalisarCorte,
   retomarCorte as svcRetomarCorte,
+  iniciarSetup as svcIniciarSetup,
+  finalizarSetup as svcFinalizarSetup,
+  reabrirSetup as svcReabrirSetup,
   MOTIVOS_PARADA,
 } from "@/services/dataService";
 import { DesafioButton } from "@/components/app/DesafioButton";
@@ -42,6 +45,19 @@ export const Route = createFileRoute("/operador")({
 });
 
 // MAQUINAS agora vem do tipo do usuário (Chapa/Perfil/Tubo).
+
+function setupElapsed(agrup: Agrupamento, nowMs: number) {
+  const sessoes = agrup.setupSessoes?.length
+    ? agrup.setupSessoes
+    : agrup.inicioSetup
+    ? [{ inicio: agrup.inicioSetup, fim: agrup.fimSetup }]
+    : [];
+  const ms = sessoes.reduce(
+    (acc, s) => acc + ((s.fim ? new Date(s.fim).getTime() : nowMs) - new Date(s.inicio).getTime()),
+    0,
+  );
+  return Math.max(0, Math.round(ms / 60000));
+}
 
 const ORDER_STATUS: Record<StatusCorte, number> = {
   "Alocado": 0,
@@ -67,6 +83,13 @@ function OperadorPage() {
   const [motivoParar, setMotivoParar] = useState<string>(MOTIVOS_PARADA[0]);
   const [motivoOutro, setMotivoOutro] = useState("");
   const [obsFim, setObsFim] = useState("");
+  const [openReabrir, setOpenReabrir] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const hoje = todayISO();
 
@@ -159,15 +182,41 @@ function OperadorPage() {
               )}
 
               {!cut && !cutting && !paused && (
-                !agrup.fimSetup ? (
-                  <div className="w-full h-16 grid place-items-center rounded-md bg-secondary text-muted-foreground text-base font-semibold flex flex-col items-center justify-center gap-0.5">
-                    <Wrench className="h-5 w-5" />
-                    <span className="text-xs">Aguardando setup da preparação</span>
+                !agrup.inicioSetup ? (
+                  <Button
+                    size="lg"
+                    className="w-full h-16 text-xl font-bold bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => { svcIniciarSetup(solic.id, agrup.id, user.nome); toast("Setup iniciado"); }}
+                  >
+                    <Wrench className="h-6 w-6 mr-2" />INICIAR SETUP
+                  </Button>
+                ) : !agrup.fimSetup ? (
+                  <div className="space-y-2">
+                    <div className="p-2 rounded border border-purple-500/60 bg-purple-500/15 text-center text-sm text-purple-200 font-semibold">
+                      Setup em andamento desde {fmtDateTime(agrup.inicioSetup).slice(11, 16)} · {setupElapsed(agrup, now)} min
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+                      onClick={() => { svcFinalizarSetup(solic.id, agrup.id, user.nome); toast.success("Setup finalizado — pronto para corte"); }}
+                    >
+                      <CheckCircle2 className="h-6 w-6 mr-2" />FINALIZAR SETUP
+                    </Button>
                   </div>
                 ) : (
-                  <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
-                    <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
-                  </Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs p-2 rounded border border-primary/50 bg-primary/10">
+                      <span className="text-primary font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Setup {agrup.setupMin ?? 0} min concluído
+                      </span>
+                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setOpenReabrir({ solic, agrup })}>
+                        <Wrench className="h-3 w-3 mr-1" />Reabrir Setup
+                      </Button>
+                    </div>
+                    <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
+                      <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
+                    </Button>
+                  </div>
                 )
               )}
 
@@ -279,6 +328,36 @@ function OperadorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!openReabrir} onOpenChange={(o) => !o && setOpenReabrir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-purple-400" /> Reabrir setup?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O plano <b>{openReabrir?.agrup.nome}</b> volta para o estado de setup e o corte fica bloqueado até você
+              finalizar novamente. O tempo já apontado ({openReabrir?.agrup.setupMin ?? 0} min) é mantido e somado ao
+              novo período.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => {
+                if (openReabrir) {
+                  svcReabrirSetup(openReabrir.solic.id, openReabrir.agrup.id, user.nome);
+                  toast("Setup reaberto");
+                }
+                setOpenReabrir(null);
+              }}
+            >
+              Reabrir setup
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
