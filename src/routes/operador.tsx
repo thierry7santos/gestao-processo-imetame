@@ -328,6 +328,36 @@ function OperadorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!openReabrir} onOpenChange={(o) => !o && setOpenReabrir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-purple-400" /> Reabrir setup?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O plano <b>{openReabrir?.agrup.nome}</b> volta para o estado de setup e o corte fica bloqueado até você
+              finalizar novamente. O tempo já apontado ({openReabrir?.agrup.setupMin ?? 0} min) é mantido e somado ao
+              novo período.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => {
+                if (openReabrir) {
+                  svcReabrirSetup(openReabrir.solic.id, openReabrir.agrup.id, user.nome);
+                  toast("Setup reaberto");
+                }
+                setOpenReabrir(null);
+              }}
+            >
+              Reabrir setup
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
