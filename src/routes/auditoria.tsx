@@ -17,8 +17,9 @@ import {
 import { fmtDate, fmtDateTime, fmtMin, minutesBetween } from "@/lib/formatters";
 import type { Maquina, Solicitacao, StatusSolicitacao } from "@/lib/types";
 import { findUser, perfilLabel } from "@/lib/auth";
-import { AlertCircle, CheckCircle2, AlertTriangle, Ruler, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, Ruler, FileText, FileSpreadsheet, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { exportarAuditoriaPDF, exportarAuditoriaExcel } from "@/lib/exporters";
 
 export const Route = createFileRoute("/auditoria")({
   component: () => (
