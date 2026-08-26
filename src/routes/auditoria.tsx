@@ -17,8 +17,9 @@ import {
 import { fmtDate, fmtDateTime, fmtMin, minutesBetween } from "@/lib/formatters";
 import type { Maquina, Solicitacao, StatusSolicitacao } from "@/lib/types";
 import { findUser, perfilLabel } from "@/lib/auth";
-import { AlertCircle, CheckCircle2, AlertTriangle, Ruler, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, Ruler, FileText, FileSpreadsheet, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { exportarAuditoriaPDF, exportarAuditoriaExcel } from "@/lib/exporters";
 
 export const Route = createFileRoute("/auditoria")({
   component: () => (
@@ -67,9 +68,19 @@ function AuditoriaPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
-      <header>
-        <h1 className="text-2xl font-bold">Auditoria de Produção</h1>
-        <p className="text-sm text-muted-foreground">Histórico geral das solicitações — da criação ao corte de todos os agrupamentos.</p>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Auditoria de Produção</h1>
+          <p className="text-sm text-muted-foreground">Histórico geral das solicitações — da criação ao corte de todos os agrupamentos.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { if (linhas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaExcel(linhas); toast.success("Excel gerado"); }}>
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { if (linhas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaPDF(linhas); toast.success("PDF gerado"); }}>
+            <FileDown className="h-4 w-4 mr-1" /> PDF
+          </Button>
+        </div>
       </header>
 
       <Card className="p-3 border-orange-500/40">

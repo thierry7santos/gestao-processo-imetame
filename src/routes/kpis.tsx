@@ -13,6 +13,10 @@ import type { Maquina } from "@/lib/types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, Cell,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet, FileDown } from "lucide-react";
+import { toast } from "sonner";
+import { exportarKpisPDF, exportarKpisExcel } from "@/lib/exporters";
 
 export const Route = createFileRoute("/kpis")({
   component: () => (
@@ -163,9 +167,25 @@ function KpisPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-[1600px] mx-auto">
-      <header>
-        <h1 className="text-2xl font-bold">Central de KPIs</h1>
-        <p className="text-sm text-muted-foreground">Programação e corte — período {range.start} até {range.end}.</p>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Central de KPIs</h1>
+          <p className="text-sm text-muted-foreground">Programação e corte — período {range.start} até {range.end}.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const resumo = { cortados: cortes.length, pesoTotal: cortes.reduce((a, c) => a + c.peso, 0), tempoRealTotal: cortes.reduce((a, c) => a + c.realMin, 0), tempoEstTotal: cortes.reduce((a, c) => a + c.estMin, 0) };
+            exportarKpisExcel(resumo, porMaquina, porOperador); toast.success("Excel gerado");
+          }}>
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            const resumo = { cortados: cortes.length, pesoTotal: cortes.reduce((a, c) => a + c.peso, 0), tempoRealTotal: cortes.reduce((a, c) => a + c.realMin, 0), tempoEstTotal: cortes.reduce((a, c) => a + c.estMin, 0) };
+            exportarKpisPDF(resumo, porMaquina, porOperador); toast.success("PDF gerado");
+          }}>
+            <FileDown className="h-4 w-4 mr-1" /> PDF
+          </Button>
+        </div>
       </header>
 
       <Card className="p-3">
