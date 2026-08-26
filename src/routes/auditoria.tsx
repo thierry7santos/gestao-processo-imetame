@@ -74,10 +74,10 @@ function AuditoriaPage() {
           <p className="text-sm text-muted-foreground">Histórico geral das solicitações — da criação ao corte de todos os agrupamentos.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { if (filtradas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaExcel(filtradas); toast.success("Excel gerado"); }}>
+          <Button variant="outline" size="sm" onClick={() => { if (linhas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaExcel(linhas); toast.success("Excel gerado"); }}>
             <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={() => { if (filtradas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaPDF(filtradas); toast.success("PDF gerado"); }}>
+          <Button variant="outline" size="sm" onClick={() => { if (linhas.length === 0) { toast("Nada para exportar"); return; } exportarAuditoriaPDF(linhas); toast.success("PDF gerado"); }}>
             <FileDown className="h-4 w-4 mr-1" /> PDF
           </Button>
         </div>
