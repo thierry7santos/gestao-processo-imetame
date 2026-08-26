@@ -36,6 +36,7 @@ interface Actions {
   desalocarAgrupamento: (solicId: string, agrupId: string) => void;
   iniciarSetup: (solicId: string, agrupId: string, usuario: string) => void;
   finalizarSetup: (solicId: string, agrupId: string, usuario: string) => void;
+  reabrirSetup: (solicId: string, agrupId: string, usuario: string) => void;
   iniciarCorte: (solicId: string, agrupId: string, operador: string, validacao: Validacao) => void;
   paralisarCorte: (solicId: string, agrupId: string, operador: string, motivo: string) => void;
   retomarCorte: (solicId: string, agrupId: string, operador: string) => void;
