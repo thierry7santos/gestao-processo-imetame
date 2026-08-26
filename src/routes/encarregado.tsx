@@ -17,7 +17,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, X, AlertOctagon, Sun, Moon, Wr
 import { toast } from "sonner";
 import {
   aplicarPassivosAnteriores, alocarAgrupamento as svcAlocar,
-  iniciarSetup as svcIniciarSetup, finalizarSetup as svcFinalizarSetup,
 } from "@/services/dataService";
 import { DesafioButton } from "@/components/app/DesafioButton";
 
