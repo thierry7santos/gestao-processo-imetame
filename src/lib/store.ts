@@ -375,7 +375,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado" && !a.inicioSetup
-                      ? { ...a, inicioSetup: ts, setupPor: usuario }
+                      ? { ...a, inicioSetup: ts, setupPor: usuario, setupSessoes: [{ inicio: ts, por: usuario }] }
                       : a,
                   ),
                   historico: [...s.historico, log(usuario, `Iniciou setup de ${a_(s, agrupId)}`)],
@@ -394,9 +394,32 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) => {
                     if (a.id !== agrupId || !a.inicioSetup || a.fimSetup) return a;
-                    return { ...a, fimSetup: ts, setupMin: minutesBetween(a.inicioSetup, ts), setupPor: usuario };
+                    const sessoes = (a.setupSessoes?.length ? a.setupSessoes : [{ inicio: a.inicioSetup, por: usuario }]).map(
+                      (ss, i, arr) => (i === arr.length - 1 && !ss.fim ? { ...ss, fim: ts } : ss),
+                    );
+                    const total = sessoes.reduce((acc, ss) => acc + (ss.fim ? minutesBetween(ss.inicio, ss.fim) : 0), 0);
+                    return { ...a, fimSetup: ts, setupMin: total, setupPor: usuario, setupSessoes: sessoes };
                   }),
                   historico: [...s.historico, log(usuario, `Finalizou setup de ${a_(s, agrupId)}`)],
+                }
+              : s,
+          ),
+        });
+      },
+
+      reabrirSetup: (solicId, agrupId, usuario) => {
+        const ts = nowISO();
+        set({
+          solicitacoes: get().solicitacoes.map((s) =>
+            s.id === solicId
+              ? {
+                  ...s,
+                  agrupamentos: s.agrupamentos.map((a) => {
+                    if (a.id !== agrupId || !a.fimSetup || a.inicioCorte) return a;
+                    const sessoes = [...(a.setupSessoes ?? []), { inicio: ts, por: usuario }];
+                    return { ...a, fimSetup: undefined, setupPor: usuario, setupSessoes: sessoes };
+                  }),
+                  historico: [...s.historico, log(usuario, `Reabriu setup de ${a_(s, agrupId)}`)],
                 }
               : s,
           ),
