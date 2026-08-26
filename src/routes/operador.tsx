@@ -159,15 +159,41 @@ function OperadorPage() {
               )}
 
               {!cut && !cutting && !paused && (
-                !agrup.fimSetup ? (
-                  <div className="w-full h-16 grid place-items-center rounded-md bg-secondary text-muted-foreground text-base font-semibold flex flex-col items-center justify-center gap-0.5">
-                    <Wrench className="h-5 w-5" />
-                    <span className="text-xs">Aguardando setup da preparação</span>
+                !agrup.inicioSetup ? (
+                  <Button
+                    size="lg"
+                    className="w-full h-16 text-xl font-bold bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => { svcIniciarSetup(solic.id, agrup.id, user.nome); toast("Setup iniciado"); }}
+                  >
+                    <Wrench className="h-6 w-6 mr-2" />INICIAR SETUP
+                  </Button>
+                ) : !agrup.fimSetup ? (
+                  <div className="space-y-2">
+                    <div className="p-2 rounded border border-purple-500/60 bg-purple-500/15 text-center text-sm text-purple-200 font-semibold">
+                      Setup em andamento desde {fmtDateTime(agrup.inicioSetup).slice(11, 16)} · {setupElapsed(agrup, now)} min
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+                      onClick={() => { svcFinalizarSetup(solic.id, agrup.id, user.nome); toast.success("Setup finalizado — pronto para corte"); }}
+                    >
+                      <CheckCircle2 className="h-6 w-6 mr-2" />FINALIZAR SETUP
+                    </Button>
                   </div>
                 ) : (
-                  <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
-                    <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
-                  </Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs p-2 rounded border border-primary/50 bg-primary/10">
+                      <span className="text-primary font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Setup {agrup.setupMin ?? 0} min concluído
+                      </span>
+                      <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setOpenReabrir({ solic, agrup })}>
+                        <Wrench className="h-3 w-3 mr-1" />Reabrir Setup
+                      </Button>
+                    </div>
+                    <Button size="lg" className="w-full h-16 text-xl font-bold" onClick={() => setOpenValid({ solic, agrup })}>
+                      <Play className="h-6 w-6 mr-2" />INÍCIO DO CORTE
+                    </Button>
+                  </div>
                 )
               )}
 
