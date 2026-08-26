@@ -67,6 +67,13 @@ function OperadorPage() {
   const [motivoParar, setMotivoParar] = useState<string>(MOTIVOS_PARADA[0]);
   const [motivoOutro, setMotivoOutro] = useState("");
   const [obsFim, setObsFim] = useState("");
+  const [openReabrir, setOpenReabrir] = useState<{ solic: Solicitacao; agrup: Agrupamento } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   const hoje = todayISO();
 
