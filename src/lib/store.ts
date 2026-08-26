@@ -357,7 +357,7 @@ export const useStore = create<AppState & Actions>()(
                   ...s,
                   agrupamentos: s.agrupamentos.map((a) =>
                     a.id === agrupId && a.statusCorte === "Alocado"
-                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado", inicioSetup: undefined, fimSetup: undefined, setupMin: undefined, setupPor: undefined }
+                      ? { ...a, maquina: undefined, turno: undefined, diaAlocado: undefined, statusCorte: "Movimentado", inicioSetup: undefined, fimSetup: undefined, setupMin: undefined, setupPor: undefined, setupSessoes: undefined }
                       : a,
                   ),
                 }
