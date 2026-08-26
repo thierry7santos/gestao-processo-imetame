@@ -81,11 +81,14 @@ export interface Agrupamento {
   diaAlocado?: string;
   statusCorte: StatusCorte;
   validacao?: Validacao;
-  /** Setup / ferramentaria — apontado pela Preparação antes do corte. */
+  /** Setup / ferramentaria — apontado pelo Operador antes do corte. */
   inicioSetup?: string;
   fimSetup?: string;
+  /** Tempo acumulado de setup (soma das sessões). */
   setupMin?: number;
   setupPor?: string;
+  /** Histórico de sessões de setup (permite reabrir). */
+  setupSessoes?: { inicio: string; fim?: string; por: string }[];
   /** Peça dentro da tolerância (sem divergência >50mm ou divergência aceita). */
   qualidadeOk?: boolean;
   inicioCorte?: string;
