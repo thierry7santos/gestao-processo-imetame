@@ -13,6 +13,10 @@ import type { Maquina } from "@/lib/types";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, Cell,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet, FileDown } from "lucide-react";
+import { toast } from "sonner";
+import { exportarKpisPDF, exportarKpisExcel } from "@/lib/exporters";
 
 export const Route = createFileRoute("/kpis")({
   component: () => (
