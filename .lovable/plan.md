@@ -1,4 +1,4 @@
-# Plano: "Disponíveis para corte" no Andon = só planos alocados no dia
+# Plano: Andon — "Disponíveis para corte" só com alocados do dia + listas com info completa
 
 ## Objetivo
 Na lista "Disponíveis para corte" do painel Andon (`src/routes/andon.tsx`), exibir apenas os planos já alocados para uma máquina **no dia de hoje** que estão aguardando corte (status `Alocado`). Hoje a lista mostra planos não alocados no dia (Movimentados / Alocados de outros dias), o que não corresponde à meta.
