@@ -56,16 +56,15 @@ function AndonPage() {
 
     for (const s of solicitacoes) {
       for (const a of s.agrupamentos) {
-        if (!a.maquina || a.diaAlocado !== hoje) {
-          if (a.statusCorte === "Movimentado" || (a.statusCorte === "Alocado" && a.diaAlocado !== hoje)) {
-            disponiveis.push({ solic: s, agrup: a });
-          }
-          continue;
-        }
+        // No Andon, só importam planos alocados a uma máquina no dia de hoje.
+        if (!a.maquina || a.diaAlocado !== hoje) continue;
         const slot = map.get(a.maquina);
         if (!slot) continue;
         if (a.statusCorte === "Em Corte" || a.statusCorte === "Corte Paralisado") slot.atual = { solic: s, agrup: a };
-        else if (a.statusCorte === "Alocado") slot.fila.push({ solic: s, agrup: a });
+        else if (a.statusCorte === "Alocado") {
+          slot.fila.push({ solic: s, agrup: a });
+          disponiveis.push({ solic: s, agrup: a });
+        }
         else if (a.statusCorte === "Cortado") {
           slot.cortados.push({ solic: s, agrup: a });
           cortadosHoje.push({ solic: s, agrup: a });
