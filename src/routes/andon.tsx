@@ -146,26 +146,16 @@ function AndonPage() {
           itens={dados.cortadosHoje}
           vazio="Nenhum plano cortado hoje"
           render={(i) => (
-            <>
-              <span className="font-mono font-semibold text-primary">{i.agrup.nome}</span>
-              <span className="truncate text-muted-foreground">{i.solic.os} · {i.agrup.maquina ?? "—"} · {i.agrup.operador ?? "—"}</span>
-              <span className="ml-auto shrink-0 font-mono text-muted-foreground">
-                {i.agrup.fimCorte ? new Date(i.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}
-              </span>
-            </>
+            <PlanoLinha i={i} extra={i.agrup.fimCorte ? new Date(i.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"} />
           )}
         />
         <ListaCard
           titulo="Disponíveis para corte"
           icon={<ListChecks className="h-4 w-4" />}
           itens={dados.disponiveis}
-          vazio="Nada disponível no momento"
+          vazio="Nenhum plano alocado ao dia no momento"
           render={(i) => (
-            <>
-              <span className="font-mono font-semibold">{i.agrup.nome}</span>
-              <span className="truncate text-muted-foreground">{i.solic.os} · {i.solic.tipo}</span>
-              <span className="ml-auto shrink-0 font-mono text-muted-foreground">{fmtMin(i.agrup.tempoEstMin)}</span>
-            </>
+            <PlanoLinha i={i} extra={fmtMin(i.agrup.tempoEstMin)} />
           )}
         />
       </div>
