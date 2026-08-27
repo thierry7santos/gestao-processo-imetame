@@ -56,16 +56,15 @@ function AndonPage() {
 
     for (const s of solicitacoes) {
       for (const a of s.agrupamentos) {
-        if (!a.maquina || a.diaAlocado !== hoje) {
-          if (a.statusCorte === "Movimentado" || (a.statusCorte === "Alocado" && a.diaAlocado !== hoje)) {
-            disponiveis.push({ solic: s, agrup: a });
-          }
-          continue;
-        }
+        // No Andon, só importam planos alocados a uma máquina no dia de hoje.
+        if (!a.maquina || a.diaAlocado !== hoje) continue;
         const slot = map.get(a.maquina);
         if (!slot) continue;
         if (a.statusCorte === "Em Corte" || a.statusCorte === "Corte Paralisado") slot.atual = { solic: s, agrup: a };
-        else if (a.statusCorte === "Alocado") slot.fila.push({ solic: s, agrup: a });
+        else if (a.statusCorte === "Alocado") {
+          slot.fila.push({ solic: s, agrup: a });
+          disponiveis.push({ solic: s, agrup: a });
+        }
         else if (a.statusCorte === "Cortado") {
           slot.cortados.push({ solic: s, agrup: a });
           cortadosHoje.push({ solic: s, agrup: a });
@@ -147,26 +146,16 @@ function AndonPage() {
           itens={dados.cortadosHoje}
           vazio="Nenhum plano cortado hoje"
           render={(i) => (
-            <>
-              <span className="font-mono font-semibold text-primary">{i.agrup.nome}</span>
-              <span className="truncate text-muted-foreground">{i.solic.os} · {i.agrup.maquina ?? "—"} · {i.agrup.operador ?? "—"}</span>
-              <span className="ml-auto shrink-0 font-mono text-muted-foreground">
-                {i.agrup.fimCorte ? new Date(i.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}
-              </span>
-            </>
+            <PlanoLinha i={i} extra={i.agrup.fimCorte ? new Date(i.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"} />
           )}
         />
         <ListaCard
           titulo="Disponíveis para corte"
           icon={<ListChecks className="h-4 w-4" />}
           itens={dados.disponiveis}
-          vazio="Nada disponível no momento"
+          vazio="Nenhum plano alocado ao dia no momento"
           render={(i) => (
-            <>
-              <span className="font-mono font-semibold">{i.agrup.nome}</span>
-              <span className="truncate text-muted-foreground">{i.solic.os} · {i.solic.tipo}</span>
-              <span className="ml-auto shrink-0 font-mono text-muted-foreground">{fmtMin(i.agrup.tempoEstMin)}</span>
-            </>
+            <PlanoLinha i={i} extra={fmtMin(i.agrup.tempoEstMin)} />
           )}
         />
       </div>
@@ -332,16 +321,51 @@ function ListaCard({ titulo, icon, itens, vazio, render }: {
       <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {icon} {titulo} <span className="ml-auto font-mono text-foreground">{itens.length}</span>
       </div>
-      <div className="max-h-56 space-y-1 overflow-y-auto">
+      <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
         {itens.length === 0 && <div className="text-xs text-muted-foreground">{vazio}</div>}
         {itens.map((i) => (
-          <div key={`${i.solic.id}-${i.agrup.id}`} className="flex items-center gap-2 rounded bg-background/40 px-2 py-1 text-xs">
+          <div key={`${i.solic.id}-${i.agrup.id}`} className="rounded bg-background/40 px-2 py-1.5 text-xs">
             {render(i)}
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+/** Linha de plano com informações técnicas completas (usada nas listas do Andon). */
+function PlanoLinha({ i, extra }: { i: Item; extra?: React.ReactNode }) {
+  const a = i.agrup;
+  const dim = a.comprimento || a.largura ? `${a.comprimento ?? "—"}×${a.largura ?? "—"}` : null;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span className="font-mono font-bold text-primary">{a.nome ?? "—"}</span>
+        <span className="font-mono text-muted-foreground">{i.solic.os}</span>
+        <TipoBadge tipo={i.solic.tipo} />
+        {a.maquina && <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted-foreground">{a.maquina}</span>}
+        {a.turno && <span className="text-[10px] uppercase text-muted-foreground">{a.turno}</span>}
+        {extra != null && <span className="ml-auto shrink-0 font-mono text-[11px] font-semibold text-muted-foreground">{extra}</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+        <span>Mat: {a.material ?? "—"}</span>
+        <span>· Esp: {a.espessura != null ? `${a.espessura}mm` : "—"}</span>
+        {dim && <span>· {dim}mm</span>}
+        <span>· Qtd: {a.qtdItens ?? "—"}</span>
+        <span>· Peso: {a.peso != null ? `${a.peso}kg` : "—"}</span>
+        <span>· RIR: {a.rir ?? "—"}</span>
+        <span>· Op: {a.operador ?? "—"}</span>
+        {a.tempoEstMin != null && <span>· Plano: {fmtMin(a.tempoEstMin)}</span>}
+      </div>
+    </div>
+  );
+}
+
+function TipoBadge({ tipo }: { tipo: string }) {
+  const cls = tipo === "Chapa" ? "bg-primary/20 text-primary"
+    : tipo === "Perfil" ? "bg-indigo-500/20 text-indigo-300"
+    : "bg-amber-500/20 text-amber-300";
+  return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cls}`}>{tipo}</span>;
 }
 
 function TotalCard({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
