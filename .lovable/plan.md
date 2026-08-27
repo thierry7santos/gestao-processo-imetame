@@ -1,23 +1,46 @@
-# Plano: "Disponíveis para corte" no Andon = só planos alocados no dia
+# Plano: Andon — "Disponíveis para corte" só com alocados do dia + listas com info completa
 
-## Objetivo
-Na lista "Disponíveis para corte" do painel Andon (`src/routes/andon.tsx`), exibir apenas os planos já alocados para uma máquina **no dia de hoje** que estão aguardando corte (status `Alocado`). Hoje a lista mostra planos não alocados no dia (Movimentados / Alocados de outros dias), o que não corresponde à meta.
+## 1. "Disponíveis para corte" = só planos alocados no dia
+Em `src/routes/andon.tsx` (no `useMemo` de `dados`, ~linhas 51–86), alterar a lista `disponiveis`:
 
-## Mudança
-Em `src/routes/andon.tsx`, dentro do `useMemo` de `dados` (linhas 51–86), alterar a construção da lista `disponiveis`:
-
-- **Antes:** inclui itens onde `!a.maquina || a.diaAlocado !== hoje` e `statusCorte === "Movimentado"` ou (`Alocado` com `diaAlocado !== hoje`) — ou seja, passivos/não alocados hoje.
+- **Hoje:** inclui itens não alocados no dia (`Movimentado` ou `Alocado` com `diaAlocado !== hoje`) — passivos/não alocados hoje.
 - **Depois:** incluir apenas itens com `a.maquina && a.diaAlocado === hoje && a.statusCorte === "Alocado"` — planos já alocados a uma máquina hoje, na fila de corte.
 
-Implementação simples: na branch que hoje trata `if (!a.maquina || a.diaAlocado !== hoje)`, parar de empurrar para `disponiveis`. Em vez disso, na branch onde `diaAlocado === hoje` e `statusCorte === "Alocado"` (que já adiciona ao `slot.fila`), adicionar também a `disponiveis`. Assim a lista agrega a fila de todas as máquinas do dia.
+Implementação: parar de empurrar para `disponiveis` na branch `if (!a.maquina || a.diaAlocado !== hoje)`; na branch `statusCorte === "Alocado"` (que já adiciona ao `slot.fila`), adicionar também a `disponiveis`. A lista agrega a fila de todas as máquinas do dia. Ordenação por `nome` permanece.
 
-A ordenação existente por `nome` permanece.
+## 2. Listas com informações completas dos planos
+Enriquecer as linhas das duas listas (`ListaCard` — "Histórico · cortados hoje" e "Disponíveis para corte") e o conteúdo dos cards de máquina com dados técnicos completos do plano.
+
+Para cada item, mostrar (quando aplicável):
+- **Nome do plano** (mono, negrito) — `agrup.nome`
+- **O.S.** — `solic.os`
+- **Tipo** — `solic.tipo` (Chapa/Perfil/Tubo)
+- **Material / Código** — `agrup.material` / `agrup.codigoMaterial`
+- **Espessura** — `agrup.espessura` (mm)
+- **Comprimento × Largura** — `agrup.comprimento` × `agrup.largura` (mm)
+- **Qtd. itens** — `agrup.qtdItens`
+- **Peso** — `agrup.peso` (kg)
+- **Máquina** — `agrup.maquina`
+- **Turno** — `agrup.turno`
+- **Operador** — `agrup.operador`
+- **RIR** — `agrup.rir`
+- **Tempo de plano** — `fmtMin(agrup.tempoEstMin)`
+- **Fim do corte** (no histórico) — horário de `agrup.fimCorte`
+
+Layout: trocar o render de linha única (`text-xs` flex) por um bloco de duas linhas por item:
+- Linha 1: Nome (mono, negrito) + O.S. + Tipo + Máquina (badge)
+- Linha 2: Esp · Comp×Larg · Qtd · Peso · RIR · Turno · Operador · Tempo
+
+Manter a altura rolável (`max-h-56 overflow-y-auto`), talvez aumentando um pouco e usando `gap`/`flex-wrap` para não cortar. Itens com poucos dados mostram "—" para campos ausentes.
+
+Nos cards de máquina (faixas Anterior/Atual/Próximo), já há Nome + O.S. + operador/tempo; adicionar Espessura e Peso quando houver espaço, sem quebrar o layout compacto.
 
 ## Sem impacto
-- Os cards de máquina (Anterior / Atual / Próximo) e a lista "Histórico · cortados hoje" não mudam.
-- Passivos anteriores continuam aparecendo no fluxo normal (Materiais/Preparação), apenas saem desta lista do Andon.
-- OEE/KPIs/Auditoria não são afetados (uso somente de leitura do Andon).
+- Cards de máquina (Anterior/Atual/Próximo) mantêm a estrutura "caça-níqueis"; só ganham campos extras.
+- Passivos anteriores continuam no fluxo Materiais/Preparação; apenas saem da lista do Andon.
+- OEE/KPIs/Auditoria não mudam (Andon é só leitura).
 
 ## Verificação
-- `bun run build:dev` deve passar.
-- Abrir `/andon`: a lista "Disponíveis para corte" deve mostrar somente planos alocados a máquinas hoje (status `Alocado`), sem Movimentados/passivos.
+- `bun run build:dev` passa.
+- `/andon`: "Disponíveis para corte" mostra só planos alocados a máquinas hoje (`Alocado`), com O.S., nome, espessura, material, dimensões, peso, etc.
+- "Histórico · cortados hoje" mostra os mesmos campos + horário do fim do corte.
