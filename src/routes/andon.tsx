@@ -321,16 +321,51 @@ function ListaCard({ titulo, icon, itens, vazio, render }: {
       <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {icon} {titulo} <span className="ml-auto font-mono text-foreground">{itens.length}</span>
       </div>
-      <div className="max-h-56 space-y-1 overflow-y-auto">
+      <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
         {itens.length === 0 && <div className="text-xs text-muted-foreground">{vazio}</div>}
         {itens.map((i) => (
-          <div key={`${i.solic.id}-${i.agrup.id}`} className="flex items-center gap-2 rounded bg-background/40 px-2 py-1 text-xs">
+          <div key={`${i.solic.id}-${i.agrup.id}`} className="rounded bg-background/40 px-2 py-1.5 text-xs">
             {render(i)}
           </div>
         ))}
       </div>
     </div>
   );
+}
+
+/** Linha de plano com informações técnicas completas (usada nas listas do Andon). */
+function PlanoLinha({ i, extra }: { i: Item; extra?: React.ReactNode }) {
+  const a = i.agrup;
+  const dim = a.comprimento || a.largura ? `${a.comprimento ?? "—"}×${a.largura ?? "—"}` : null;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <span className="font-mono font-bold text-primary">{a.nome ?? "—"}</span>
+        <span className="font-mono text-muted-foreground">{i.solic.os}</span>
+        <TipoBadge tipo={i.solic.tipo} />
+        {a.maquina && <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted-foreground">{a.maquina}</span>}
+        {a.turno && <span className="text-[10px] uppercase text-muted-foreground">{a.turno}</span>}
+        {extra != null && <span className="ml-auto shrink-0 font-mono text-[11px] font-semibold text-muted-foreground">{extra}</span>}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+        <span>Mat: {a.material ?? "—"}</span>
+        <span>· Esp: {a.espessura != null ? `${a.espessura}mm` : "—"}</span>
+        {dim && <span>· {dim}mm</span>}
+        <span>· Qtd: {a.qtdItens ?? "—"}</span>
+        <span>· Peso: {a.peso != null ? `${a.peso}kg` : "—"}</span>
+        <span>· RIR: {a.rir ?? "—"}</span>
+        <span>· Op: {a.operador ?? "—"}</span>
+        {a.tempoEstMin != null && <span>· Plano: {fmtMin(a.tempoEstMin)}</span>}
+      </div>
+    </div>
+  );
+}
+
+function TipoBadge({ tipo }: { tipo: string }) {
+  const cls = tipo === "Chapa" ? "bg-primary/20 text-primary"
+    : tipo === "Perfil" ? "bg-indigo-500/20 text-indigo-300"
+    : "bg-amber-500/20 text-amber-300";
+  return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cls}`}>{tipo}</span>;
 }
 
 function TotalCard({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
