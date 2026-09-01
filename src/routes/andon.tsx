@@ -217,6 +217,10 @@ function MaquinaCard({ maquina, slot, agora }: {
               {slot.anterior.solic.os} · concluído{" "}
               {slot.anterior.agrup.fimCorte ? new Date(slot.anterior.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}
             </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {slot.anterior.agrup.material ?? "—"} · {slot.anterior.agrup.espessura != null ? `${slot.anterior.agrup.espessura}mm` : "—"}
+              {slot.anterior.agrup.peso != null ? ` · ${slot.anterior.agrup.peso}kg` : ""}
+            </div>
           </>
         ) : (
           <div className="text-[11px] text-muted-foreground">Sem corte anterior hoje</div>
@@ -230,6 +234,10 @@ function MaquinaCard({ maquina, slot, agora }: {
             <div className="truncate font-mono text-base font-extrabold">{atual.agrup.nome}</div>
             <div className="truncate text-[11px] text-muted-foreground">
               {atual.solic.os} · {atual.agrup.operador ?? "—"}
+            </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {atual.agrup.material ?? "—"} · {atual.agrup.espessura != null ? `${atual.agrup.espessura}mm` : "—"}
+              {atual.agrup.peso != null ? ` · ${atual.agrup.peso}kg` : ""}
             </div>
             <div className="mt-1 flex items-baseline justify-between font-mono tabular-nums">
               <span className={`text-2xl font-extrabold ${excedeu ? "text-red-400" : "text-primary"}`}>
@@ -257,6 +265,10 @@ function MaquinaCard({ maquina, slot, agora }: {
             <div className="truncate font-mono text-sm font-bold">{slot.proximo.agrup.nome}</div>
             <div className="truncate text-[11px] text-muted-foreground">
               {slot.proximo.solic.os} · <Clock className="inline h-3 w-3" /> {fmtMin(slot.proximo.agrup.tempoEstMin)}
+            </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {slot.proximo.agrup.material ?? "—"} · {slot.proximo.agrup.espessura != null ? `${slot.proximo.agrup.espessura}mm` : "—"}
+              {slot.proximo.agrup.peso != null ? ` · ${slot.proximo.agrup.peso}kg` : ""}
             </div>
           </>
         ) : (
