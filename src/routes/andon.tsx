@@ -231,6 +231,10 @@ function MaquinaCard({ maquina, slot, agora }: {
             <div className="truncate text-[11px] text-muted-foreground">
               {atual.solic.os} · {atual.agrup.operador ?? "—"}
             </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {atual.agrup.material ?? "—"} · {atual.agrup.espessura != null ? `${atual.agrup.espessura}mm` : "—"}
+              {atual.agrup.peso != null ? ` · ${atual.agrup.peso}kg` : ""}
+            </div>
             <div className="mt-1 flex items-baseline justify-between font-mono tabular-nums">
               <span className={`text-2xl font-extrabold ${excedeu ? "text-red-400" : "text-primary"}`}>
                 {String(Math.floor(decorridoMin / 60)).padStart(2, "0")}:{String(decorridoMin % 60).padStart(2, "0")}
