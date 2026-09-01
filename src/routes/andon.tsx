@@ -262,6 +262,10 @@ function MaquinaCard({ maquina, slot, agora }: {
             <div className="truncate text-[11px] text-muted-foreground">
               {slot.proximo.solic.os} · <Clock className="inline h-3 w-3" /> {fmtMin(slot.proximo.agrup.tempoEstMin)}
             </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {slot.proximo.agrup.material ?? "—"} · {slot.proximo.agrup.espessura != null ? `${slot.proximo.agrup.espessura}mm` : "—"}
+              {slot.proximo.agrup.peso != null ? ` · ${slot.proximo.agrup.peso}kg` : ""}
+            </div>
           </>
         ) : (
           <div className="text-[11px] text-muted-foreground">Fila vazia</div>
