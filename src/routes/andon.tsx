@@ -217,6 +217,10 @@ function MaquinaCard({ maquina, slot, agora }: {
               {slot.anterior.solic.os} · concluído{" "}
               {slot.anterior.agrup.fimCorte ? new Date(slot.anterior.agrup.fimCorte).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—"}
             </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              {slot.anterior.agrup.material ?? "—"} · {slot.anterior.agrup.espessura != null ? `${slot.anterior.agrup.espessura}mm` : "—"}
+              {slot.anterior.agrup.peso != null ? ` · ${slot.anterior.agrup.peso}kg` : ""}
+            </div>
           </>
         ) : (
           <div className="text-[11px] text-muted-foreground">Sem corte anterior hoje</div>
