@@ -119,12 +119,14 @@ function AndonPage() {
           const pesoMaq = slot.cortados.reduce((acc, x) => acc + (x.agrup.peso ?? 0), 0)
             + (slot.atual ? (slot.atual.agrup.peso ?? 0) : 0);
           return (
-            <div key={m} className="flex flex-col gap-1.5">
-              <div className="grid grid-cols-2 gap-1.5">
+            <div key={m} className="flex h-full flex-col gap-1.5">
+              <div className="grid shrink-0 grid-cols-2 gap-1.5">
                 <MiniStat label="Cortados" value={String(cortadosMaq)} tone="ok" />
                 <MiniStat label="Peso" value={`${pesoMaq.toLocaleString("pt-BR")} kg`} tone="ok" />
               </div>
-              <MaquinaCard maquina={m} slot={slot} agora={agora} />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <MaquinaCard maquina={m} slot={slot} agora={agora} />
+              </div>
             </div>
           );
         })}
