@@ -84,18 +84,6 @@ function AndonPage() {
     return { map, cortadosHoje, disponiveis };
   }, [solicitacoes, hoje]);
 
-  const totais = useMemo(() => {
-    let cortados = 0, emAndamento = 0, paralisados = 0, peso = 0;
-    for (const s of solicitacoes) {
-      for (const a of s.agrupamentos) {
-        if (a.diaAlocado !== hoje) continue;
-        if (a.statusCorte === "Cortado") { cortados++; peso += a.peso ?? 0; }
-        else if (a.statusCorte === "Em Corte") { emAndamento++; peso += a.peso ?? 0; }
-        else if (a.statusCorte === "Corte Paralisado") { paralisados++; }
-      }
-    }
-    return { cortados, emAndamento, paralisados, peso };
-  }, [solicitacoes, hoje]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col p-4 gap-4">
@@ -123,18 +111,22 @@ function AndonPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <TotalCard label="Cortados hoje" value={String(totais.cortados)} tone="ok" />
-        <TotalCard label="Em andamento" value={String(totais.emAndamento)} tone="run" />
-        <TotalCard label="Paralisados" value={String(totais.paralisados)} tone={totais.paralisados > 0 ? "warn" : "idle"} />
-        <TotalCard label="Peso acumulado" value={`${totais.peso.toLocaleString("pt-BR")} kg`} tone="ok" />
-      </div>
-
-      {/* Grade tipo "caça-níquel": anterior / atual / próximo */}
+      {/* Grade tipo "caça-níquel": anterior / atual / próximo (com totais por máquina acima) */}
       <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {MAQUINAS.map((m) => {
           const slot = dados.map.get(m)!;
-          return <MaquinaCard key={m} maquina={m} slot={slot} agora={agora} />;
+          const cortadosMaq = slot.cortados.length;
+          const pesoMaq = slot.cortados.reduce((acc, x) => acc + (x.agrup.peso ?? 0), 0)
+            + (slot.atual ? (slot.atual.agrup.peso ?? 0) : 0);
+          return (
+            <div key={m} className="flex flex-col gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
+                <MiniStat label="Cortados" value={String(cortadosMaq)} tone="ok" />
+                <MiniStat label="Peso" value={`${pesoMaq.toLocaleString("pt-BR")} kg`} tone="ok" />
+              </div>
+              <MaquinaCard maquina={m} slot={slot} agora={agora} />
+            </div>
+          );
         })}
       </div>
 
@@ -380,15 +372,15 @@ function TipoBadge({ tipo }: { tipo: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cls}`}>{tipo}</span>;
 }
 
-function TotalCard({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
+function MiniStat({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
   const cls = tone === "ok" ? "text-primary"
     : tone === "run" ? "text-yellow-300"
     : tone === "warn" ? "text-orange-300 pulse-orange"
     : "text-muted-foreground";
   return (
-    <div className="rounded-lg border border-border bg-secondary/40 p-3">
-      <div className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</div>
-      <div className={`font-mono text-2xl font-extrabold sm:text-3xl ${cls}`}>{value}</div>
+    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-center">
+      <div className="text-[9px] font-semibold uppercase leading-tight text-muted-foreground">{label}</div>
+      <div className={`font-mono text-sm font-extrabold leading-tight ${cls}`}>{value}</div>
     </div>
   );
 }
