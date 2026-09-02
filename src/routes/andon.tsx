@@ -372,15 +372,15 @@ function TipoBadge({ tipo }: { tipo: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${cls}`}>{tipo}</span>;
 }
 
-function TotalCard({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
+function MiniStat({ label, value, tone }: { label: string; value: string; tone: "ok" | "run" | "warn" | "idle" }) {
   const cls = tone === "ok" ? "text-primary"
     : tone === "run" ? "text-yellow-300"
     : tone === "warn" ? "text-orange-300 pulse-orange"
     : "text-muted-foreground";
   return (
-    <div className="rounded-lg border border-border bg-secondary/40 p-3">
-      <div className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</div>
-      <div className={`font-mono text-2xl font-extrabold sm:text-3xl ${cls}`}>{value}</div>
+    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1 text-center">
+      <div className="text-[9px] font-semibold uppercase leading-tight text-muted-foreground">{label}</div>
+      <div className={`font-mono text-sm font-extrabold leading-tight ${cls}`}>{value}</div>
     </div>
   );
 }
