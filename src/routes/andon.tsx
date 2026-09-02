@@ -111,18 +111,22 @@ function AndonPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <TotalCard label="Cortados hoje" value={String(totais.cortados)} tone="ok" />
-        <TotalCard label="Em andamento" value={String(totais.emAndamento)} tone="run" />
-        <TotalCard label="Paralisados" value={String(totais.paralisados)} tone={totais.paralisados > 0 ? "warn" : "idle"} />
-        <TotalCard label="Peso acumulado" value={`${totais.peso.toLocaleString("pt-BR")} kg`} tone="ok" />
-      </div>
-
-      {/* Grade tipo "caça-níquel": anterior / atual / próximo */}
+      {/* Grade tipo "caça-níquel": anterior / atual / próximo (com totais por máquina acima) */}
       <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {MAQUINAS.map((m) => {
           const slot = dados.map.get(m)!;
-          return <MaquinaCard key={m} maquina={m} slot={slot} agora={agora} />;
+          const cortadosMaq = slot.cortados.length;
+          const pesoMaq = slot.cortados.reduce((acc, x) => acc + (x.agrup.peso ?? 0), 0)
+            + (slot.atual ? (slot.atual.agrup.peso ?? 0) : 0);
+          return (
+            <div key={m} className="flex flex-col gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
+                <MiniStat label="Cortados" value={String(cortadosMaq)} tone="ok" />
+                <MiniStat label="Peso" value={`${pesoMaq.toLocaleString("pt-BR")} kg`} tone="ok" />
+              </div>
+              <MaquinaCard maquina={m} slot={slot} agora={agora} />
+            </div>
+          );
         })}
       </div>
 
