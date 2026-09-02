@@ -186,7 +186,7 @@ function MaquinaCard({ maquina, slot, agora }: {
     : "bg-secondary/30 border-border";
 
   return (
-    <div className={`flex flex-col overflow-hidden rounded-xl border-2 ${cls}`}>
+    <div className={`flex flex-1 min-h-0 flex-col overflow-hidden rounded-xl border-2 ${cls}`}>
       <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
         <div className="font-mono text-lg font-extrabold">{maquina}</div>
         {cortando ? (
