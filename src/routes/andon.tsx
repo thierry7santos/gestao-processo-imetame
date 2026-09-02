@@ -84,18 +84,6 @@ function AndonPage() {
     return { map, cortadosHoje, disponiveis };
   }, [solicitacoes, hoje]);
 
-  const totais = useMemo(() => {
-    let cortados = 0, emAndamento = 0, paralisados = 0, peso = 0;
-    for (const s of solicitacoes) {
-      for (const a of s.agrupamentos) {
-        if (a.diaAlocado !== hoje) continue;
-        if (a.statusCorte === "Cortado") { cortados++; peso += a.peso ?? 0; }
-        else if (a.statusCorte === "Em Corte") { emAndamento++; peso += a.peso ?? 0; }
-        else if (a.statusCorte === "Corte Paralisado") { paralisados++; }
-      }
-    }
-    return { cortados, emAndamento, paralisados, peso };
-  }, [solicitacoes, hoje]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col p-4 gap-4">
